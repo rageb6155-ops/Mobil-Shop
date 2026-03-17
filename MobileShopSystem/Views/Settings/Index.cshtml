@@ -1,0 +1,2075 @@
+﻿@model List<MobileShopSystem.Models.User>
+
+@{
+    ViewData["Title"] = "الإعدادات";
+    var username = Context.Session.GetString("Username");
+    var approved = Model.Where(x => x.IsApproved).ToList();
+    var pending = Model.Where(x => !x.IsApproved).ToList();
+}
+
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>@ViewData["Title"]</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" />
+    <!-- إضافة مكتبات PDF والواتساب -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, sans-serif;
+            background: #ffffff;
+            margin: 0;
+            padding: 20px;
+            color: #333;
+        }
+
+        .page-wrapper {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        /* بطاقة العنوان */
+        .header-card {
+            background: white;
+            border-radius: 16px;
+            padding: 20px 25px;
+            margin-bottom: 25px;
+            box-shadow: 0 5px 20px rgba(0,0,0,0.05);
+            border: 1px solid #f0f0f0;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 15px;
+        }
+
+        .header-title h1 {
+            margin: 0;
+            font-size: 26px;
+            font-weight: 600;
+            color: #f39c12;
+        }
+
+        .header-title p {
+            margin: 5px 0 0;
+            color: #6c757d;
+            font-size: 14px;
+        }
+
+        .user-info {
+            background: #f8f9fa;
+            color: #f39c12;
+            padding: 8px 20px;
+            border-radius: 50px;
+            font-size: 14px;
+            font-weight: 500;
+            border: 1px solid #e9ecef;
+        }
+
+            .user-info i {
+                margin-left: 8px;
+            }
+
+        /* بطاقة المحتوى */
+        .content-card {
+            background: white;
+            border-radius: 16px;
+            padding: 25px;
+            box-shadow: 0 5px 20px rgba(0,0,0,0.05);
+            border: 1px solid #f0f0f0;
+            margin-bottom: 30px;
+        }
+
+        .card-header-custom {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            padding-bottom: 15px;
+            border-bottom: 2px solid #f0f0f0;
+        }
+
+            .card-header-custom h2 {
+                margin: 0;
+                color: #f39c12;
+                font-weight: 600;
+                font-size: 22px;
+            }
+
+        .badge-count {
+            background: #f39c12;
+            color: white;
+            padding: 5px 15px;
+            border-radius: 50px;
+            font-size: 14px;
+            font-weight: 500;
+        }
+
+        /* أزرار */
+        .btn {
+            padding: 6px 12px;
+            border-radius: 6px;
+            color: #fff;
+            text-decoration: none;
+            font-size: 12px;
+            margin: 2px;
+            display: inline-block;
+            transition: all 0.3s;
+            border: none;
+            cursor: pointer;
+        }
+
+            .btn:hover {
+                transform: translateY(-2px);
+            }
+
+        .btn-edit {
+            background: #3498db;
+        }
+
+        .btn-approve {
+            background: #2ecc71;
+        }
+
+        .btn-block {
+            background: #e67e22;
+        }
+
+        .btn-unblock {
+            background: #27ae60;
+        }
+
+        .btn-delete {
+            background: #e74c3c;
+        }
+
+        .btn-details {
+            background: #9b59b6;
+        }
+
+        .btn-whatsapp {
+            background: #25D366;
+            color: white;
+        }
+
+        .btn-whatsapp-bulk {
+            background: #128C7E;
+            color: white;
+            padding: 8px 20px;
+            border-radius: 8px;
+            font-size: 14px;
+            font-weight: 500;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .btn-pdf {
+            background: #f39c12;
+            color: white;
+            border: none;
+            padding: 8px 20px;
+            border-radius: 8px;
+            font-size: 14px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.3s;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+            .btn-pdf:hover {
+                background: #e67e22;
+                transform: translateY(-2px);
+            }
+
+            .btn-pdf:disabled {
+                opacity: 0.5;
+                cursor: not-allowed;
+                transform: none;
+            }
+
+        /* الجدول */
+        .table-responsive {
+            overflow-x: auto;
+            border-radius: 12px;
+        }
+
+        .user-table {
+            width: 100%;
+            border-collapse: collapse;
+            background: white;
+        }
+
+            .user-table th {
+                background: #f8f9fa;
+                color: #f39c12;
+                padding: 12px;
+                font-weight: 600;
+                font-size: 14px;
+                text-align: center;
+                border: 1px solid #e9ecef;
+            }
+
+            .user-table td {
+                padding: 12px;
+                text-align: center;
+                border-bottom: 1px solid #e9ecef;
+                color: #333;
+            }
+
+            .user-table tbody tr {
+                transition: all 0.3s;
+                cursor: pointer;
+            }
+
+                .user-table tbody tr:hover {
+                    background: #f8f9fa;
+                }
+
+                .user-table tbody tr.selected {
+                    background: #fff3e0;
+                    border: 2px solid #f39c12;
+                }
+
+        .online {
+            color: #27ae60;
+            font-weight: bold;
+        }
+
+        .offline {
+            color: #95a5a6;
+        }
+
+        .status-badge {
+            display: inline-block;
+            padding: 3px 8px;
+            border-radius: 12px;
+            font-size: 11px;
+            font-weight: bold;
+        }
+
+        .status-admin {
+            background: #f39c12;
+            color: white;
+        }
+
+        .status-user {
+            background: #3498db;
+            color: white;
+        }
+
+        .status-blocked {
+            background: #e74c3c;
+            color: white;
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 40px;
+            background: #f8f9fa;
+            border-radius: 12px;
+            color: #6c757d;
+        }
+
+            .empty-state i {
+                font-size: 48px;
+                margin-bottom: 15px;
+                color: #dee2e6;
+            }
+
+        .selection-message {
+            background: #fff3cd;
+            color: #856404;
+            padding: 8px 15px;
+            border-radius: 8px;
+            font-size: 13px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        /* ===== تنسيق مودال الواتساب ===== */
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.5);
+            z-index: 9999;
+            overflow-y: auto;
+        }
+
+        .modal-content {
+            background: white;
+            width: 90%;
+            max-width: 900px;
+            margin: 50px auto;
+            border-radius: 20px;
+            padding: 25px;
+            max-height: 85vh;
+            overflow-y: auto;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+        }
+
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            padding-bottom: 15px;
+            border-bottom: 2px solid #f0f0f0;
+        }
+
+            .modal-header h3 {
+                margin: 0;
+                color: #f39c12;
+                font-weight: 600;
+            }
+
+        .close-btn {
+            background: #6c757d;
+            color: white;
+            border: none;
+            padding: 8px 20px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 14px;
+            transition: all 0.3s;
+        }
+
+            .close-btn:hover {
+                background: #5a6268;
+            }
+
+        /* ===== تنسيق اختيار المستخدمين ===== */
+        .users-selection {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+            margin: 20px 0;
+            max-height: 500px;
+        }
+
+        .users-list {
+            border: 1px solid #e9ecef;
+            border-radius: 12px;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .list-header {
+            background: #f39c12;
+            color: white;
+            padding: 12px 15px;
+            font-weight: 500;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+            .list-header i {
+                cursor: pointer;
+                opacity: 0.8;
+                transition: opacity 0.3s;
+            }
+
+                .list-header i:hover {
+                    opacity: 1;
+                }
+
+        .list-search {
+            padding: 10px;
+            border-bottom: 1px solid #e9ecef;
+            position: relative;
+        }
+
+            .list-search input {
+                width: 100%;
+                padding: 8px 35px 8px 10px;
+                border: 1px solid #e9ecef;
+                border-radius: 20px;
+                font-size: 13px;
+            }
+
+            .list-search i {
+                position: absolute;
+                right: 20px;
+                top: 18px;
+                color: #adb5bd;
+                font-size: 14px;
+            }
+
+        .list-items {
+            overflow-y: auto;
+            flex: 1;
+            max-height: 350px;
+        }
+
+        .user-item {
+            padding: 10px 15px;
+            border-bottom: 1px solid #f0f0f0;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+            .user-item:hover {
+                background: #fff3e0;
+            }
+
+            .user-item.selected {
+                background: #ffe6cc;
+                border-right: 3px solid #f39c12;
+            }
+
+        .user-checkbox {
+            width: 18px;
+            height: 18px;
+            cursor: pointer;
+        }
+
+        .user-info {
+            flex: 1;
+        }
+
+        .user-name {
+            font-weight: 600;
+            color: #333;
+            font-size: 14px;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            flex-wrap: wrap;
+        }
+
+        .user-details {
+            font-size: 11px;
+            color: #666;
+            margin-top: 2px;
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+
+        .user-phone {
+            color: #27ae60;
+        }
+
+        .user-role {
+            padding: 2px 6px;
+            border-radius: 10px;
+            font-size: 9px;
+            font-weight: bold;
+        }
+
+        .role-admin {
+            background: #f39c12;
+            color: white;
+        }
+
+        .role-user {
+            background: #3498db;
+            color: white;
+        }
+
+        .status-online {
+            color: #27ae60;
+        }
+
+        .status-offline {
+            color: #95a5a6;
+        }
+
+        .status-blocked {
+            color: #e74c3c;
+        }
+
+        .selected-count {
+            background: white;
+            color: #f39c12;
+            padding: 2px 8px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: bold;
+        }
+
+        .selection-actions {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 15px;
+            flex-wrap: wrap;
+        }
+
+        .message-preview {
+            background: #fff3e0;
+            border-radius: 12px;
+            padding: 15px;
+            margin: 20px 0;
+            border-right: 4px solid #25D366;
+        }
+
+            .message-preview h5 {
+                margin: 0 0 10px 0;
+                color: #f39c12;
+                font-size: 14px;
+            }
+
+        .preview-content {
+            background: white;
+            padding: 12px;
+            border-radius: 8px;
+            font-size: 13px;
+            line-height: 1.5;
+            white-space: pre-wrap;
+            max-height: 200px;
+            overflow-y: auto;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .form-label {
+            display: block;
+            margin-bottom: 8px;
+            color: #495057;
+            font-size: 14px;
+            font-weight: 500;
+        }
+
+        .form-control, .form-select {
+            width: 100%;
+            padding: 12px 15px;
+            border: 2px solid #e9ecef;
+            border-radius: 10px;
+            font-size: 14px;
+            transition: all 0.3s;
+        }
+
+            .form-control:focus, .form-select:focus {
+                outline: none;
+                border-color: #f39c12;
+                box-shadow: 0 0 0 3px rgba(243, 156, 18, 0.1);
+            }
+
+        .alert {
+            padding: 12px 15px;
+            border-radius: 8px;
+            margin-bottom: 15px;
+        }
+
+        .alert-success {
+            background: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+
+        .alert-info {
+            background: #d1ecf1;
+            color: #0c5460;
+            border: 1px solid #bee5eb;
+        }
+
+        .alert-warning {
+            background: #fff3cd;
+            color: #856404;
+            border: 1px solid #ffeeba;
+        }
+
+        /* ===== تنسيق 80mm للطباعة ===== */
+        .print-80mm {
+            width: 80mm;
+            padding: 2mm;
+            margin: 0 auto;
+            font-family: 'Segoe UI', Tahoma, sans-serif;
+            background: white;
+            direction: rtl;
+            font-size: 9px;
+            line-height: 1.2;
+            box-sizing: border-box;
+        }
+
+            .print-80mm .header {
+                text-align: center;
+                border-bottom: 1px dashed #f39c12;
+                padding-bottom: 2mm;
+                margin-bottom: 2mm;
+            }
+
+            .print-80mm .title {
+                font-size: 14px;
+                font-weight: bold;
+                color: #f39c12;
+            }
+
+            .print-80mm .info-row {
+                display: flex;
+                justify-content: space-between;
+                padding: 1mm 0;
+                border-bottom: 1px dotted #eee;
+            }
+
+            .print-80mm .footer {
+                margin-top: 2mm;
+                text-align: center;
+                font-size: 7px;
+                color: #999;
+                border-top: 1px solid #eee;
+                padding-top: 1mm;
+            }
+    </style>
+</head>
+<body>
+    <div class="page-wrapper">
+        <!-- بطاقة العنوان -->
+        <div class="header-card">
+            <div class="header-title">
+                <h1>
+                    <i class="fas fa-cog"></i> الإعدادات
+                </h1>
+                <p>إدارة المستخدمين والصلاحيات</p>
+            </div>
+            <div class="user-info">
+                <i class="fas fa-user-circle"></i>
+                @username
+            </div>
+        </div>
+
+        @* المستخدمين قيد الموافقة *@
+        @if (pending.Any())
+        {
+            <div class="content-card">
+                <div class="card-header-custom">
+                    <h2>
+                        <i class="fas fa-hourglass-half"></i> مستخدمين قيد الموافقة
+                    </h2>
+                    <div style="display: flex; gap: 15px; align-items: center;">
+                        <span class="badge-count">@pending.Count()</span>
+                    </div>
+                </div>
+
+                <div class="table-responsive">
+                    <table class="user-table">
+                        <thead>
+                            <tr>
+                                <th>#</th>
+                                <th>اسم المستخدم</th>
+                                <th>الهاتف</th>
+                                <th>الإجراءات</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @{
+                                int pendingCounter = 1;
+                                foreach (var u in pending)
+                                {
+                                    <tr>
+                                        <td>@pendingCounter</td>
+                                        <td><i class="fas fa-user"></i> @u.Username</td>
+                                        <td><i class="fas fa-phone"></i> @u.Phone</td>
+                                        <td>
+                                            <a asp-controller="Settings" asp-action="Approve" asp-route-id="@u.Id" class="btn btn-approve">
+                                                <i class="fas fa-check"></i> موافقة
+                                            </a>
+                                            <a asp-controller="Settings" asp-action="Delete" asp-route-id="@u.Id" class="btn btn-delete">
+                                                <i class="fas fa-trash"></i> حذف
+                                            </a>
+                                            <a asp-controller="Settings" asp-action="Details" asp-route-id="@u.Id" class="btn btn-details">
+                                                <i class="fas fa-info"></i> عرض التفاصيل
+                                            </a>
+                                            <button class="btn btn-whatsapp" onclick="showUserWhatsAppModal(@u.Id, '@u.Username', '@u.Phone')">
+                                                <i class="fab fa-whatsapp"></i> واتساب
+                                            </button>
+                                        </td>
+                                    </tr>
+                                    pendingCounter++;
+                                }
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        }
+
+        @* المستخدمين الحاليين *@
+        <div class="content-card">
+            <div class="card-header-custom">
+                <h2>
+                    <i class="fas fa-users"></i> المستخدمين الحاليين
+                </h2>
+                <div style="display: flex; gap: 15px; align-items: center;">
+                    <button class="btn-whatsapp-bulk" onclick="showBulkWhatsAppModal()">
+                        <i class="fab fa-whatsapp"></i> رسائل جماعية
+                    </button>
+                    <div id="selectionMessage" class="selection-message" style="display: none;">
+                        <i class="fas fa-check-circle"></i>
+                        <span id="selectedUserName"></span>
+                    </div>
+                    <button class="btn-pdf" id="printPdfBtn" onclick="printSelectedUser()" disabled>
+                        <i class="fas fa-file-pdf"></i> تصدير PDF
+                    </button>
+                    <span class="badge-count">@approved.Count()</span>
+                </div>
+            </div>
+
+            <div class="table-responsive">
+                <table class="user-table" id="usersTable">
+                    <thead>
+                        <tr>
+                            <th>#</th>
+                            <th>الاسم</th>
+                            <th>الهاتف</th>
+                            <th>الصلاحية</th>
+                            <th>الحالة</th>
+                            <th>آخر دخول</th>
+                            <th>الإجراءات</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @{
+                            int approvedCounter = 1;
+                            foreach (var u in approved)
+                            {
+                                <tr onclick="selectUser(@approvedCounter - 1, '@u.Username', '@u.Phone', '@(u.IsAdmin ? "أدمن" : "مستخدم")', '@(u.IsOnline ? "متصل" : "غير متصل")', '@u.LastLogin?.ToString("yyyy-MM-dd HH:mm")', '@u.Id', '@u.Password', '@u.IsBlocked', '@u.IsApproved')">
+                                    <td>@approvedCounter</td>
+                                    <td><i class="fas fa-user"></i> @u.Username</td>
+                                    <td><i class="fas fa-phone"></i> @u.Phone</td>
+                                    <td>
+                                        @if (u.IsAdmin)
+                                        {
+                                            <span class="status-badge status-admin">أدمن</span>
+                                        }
+                                        else
+                                        {
+                                            <span class="status-badge status-user">مستخدم</span>
+                                        }
+                                        @if (u.IsBlocked)
+                                        {
+                                            <span class="status-badge status-blocked" style="margin-right: 5px;">محظور</span>
+                                        }
+                                    </td>
+                                    <td class="@(u.IsOnline ? "online" : "offline")">
+                                        <i class="fas fa-circle"></i> @((u.IsOnline) ? "متصل" : "غير متصل")
+                                    </td>
+                                    <td><i class="far fa-clock"></i> @u.LastLogin?.ToString("yyyy-MM-dd HH:mm")</td>
+                                    <td>
+                                        <a asp-controller="Settings" asp-action="Edit" asp-route-id="@u.Id" class="btn btn-edit">
+                                            <i class="fas fa-edit"></i> تعديل
+                                        </a>
+                                        @if (!u.IsBlocked)
+                                        {
+                                            <a asp-controller="Settings" asp-action="Block" asp-route-id="@u.Id" class="btn btn-block">
+                                                <i class="fas fa-ban"></i> حظر
+                                            </a>
+                                        }
+                                        else
+                                        {
+                                            <a asp-controller="Settings" asp-action="Unblock" asp-route-id="@u.Id" class="btn btn-unblock">
+                                                <i class="fas fa-check-circle"></i> فك الحظر
+                                            </a>
+                                        }
+                                        <a asp-controller="Settings" asp-action="Delete" asp-route-id="@u.Id" class="btn btn-delete">
+                                            <i class="fas fa-trash"></i> حذف
+                                        </a>
+                                        <a asp-controller="Settings" asp-action="Details" asp-route-id="@u.Id" class="btn btn-details">
+                                            <i class="fas fa-info"></i> عرض التفاصيل
+                                        </a>
+                                        <button class="btn btn-whatsapp" onclick="showUserWhatsAppModal(@u.Id, '@u.Username', '@u.Phone')">
+                                            <i class="fab fa-whatsapp"></i> واتساب
+                                        </button>
+                                    </td>
+                                </tr>
+                                approvedCounter++;
+                            }
+                        }
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- ===== مودال الرسائل الجماعية المتقدم ===== -->
+    <div id="bulkWhatsAppModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3><i class="fab fa-whatsapp text-success"></i> إرسال رسائل واتساب للمستخدمين</h3>
+                <button class="close-btn" onclick="closeBulkWhatsAppModal()">✕ إغلاق</button>
+            </div>
+            <div class="modal-body">
+                <!-- أزرار الإجراءات السريعة -->
+                <div class="selection-actions">
+                    <button class="btn btn-sm btn-primary" onclick="selectAllUsers()">
+                        <i class="fas fa-check-double"></i> تحديد الكل
+                    </button>
+                    <button class="btn btn-sm btn-secondary" onclick="deselectAllUsers()">
+                        <i class="fas fa-times"></i> إلغاء التحديد
+                    </button>
+                    <button class="btn btn-sm btn-info" onclick="refreshUsersList()">
+                        <i class="fas fa-sync-alt"></i> تحديث القائمة
+                    </button>
+                </div>
+
+                <!-- قسم اختيار المستخدمين -->
+                <div class="users-selection">
+                    <!-- قائمة المستخدمين المتاحين -->
+                    <div class="users-list">
+                        <div class="list-header">
+                            <span><i class="fas fa-users"></i> قائمة المستخدمين</span>
+                            <span class="selected-count" id="availableCount">0</span>
+                        </div>
+                        <div class="list-search">
+                            <i class="fas fa-search"></i>
+                            <input type="text" id="availableSearch" placeholder="بحث في القائمة..." oninput="filterAvailableUsers()">
+                        </div>
+                        <div class="list-items" id="availableUsersList">
+                            <div class="text-center p-3 text-muted">
+                                <i class="fas fa-spinner fa-spin"></i> جاري التحميل...
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- قائمة المستخدمين المختارين -->
+                    <div class="users-list">
+                        <div class="list-header" style="background: #27ae60;">
+                            <span><i class="fas fa-check-circle"></i> المستخدمين المختارين</span>
+                            <span class="selected-count" id="selectedCount">0</span>
+                        </div>
+                        <div class="list-search">
+                            <i class="fas fa-search"></i>
+                            <input type="text" id="selectedSearch" placeholder="بحث في القائمة..." oninput="filterSelectedUsers()">
+                        </div>
+                        <div class="list-items" id="selectedUsersList">
+                            <div class="text-center p-3 text-muted">
+                                <i class="fas fa-info-circle"></i> لا يوجد مستخدمين مختارين
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- نوع الرسالة -->
+                <div class="form-group">
+                    <label class="form-label">نوع الرسالة</label>
+                    <select class="form-select" id="bulkMessageType" onchange="updateBulkMessageTemplate()">
+                        <option value="custom">📝 رسالة مخصصة</option>
+                        <option value="welcome">👋 رسالة ترحيب</option>
+                        <option value="promote">🎉 ترقية إلى أدمن</option>
+                        <option value="demote">ℹ️ تنزيل من أدمن</option>
+                        <option value="block">🚫 إشعار حظر</option>
+                        <option value="unblock">✅ إشعار إلغاء حظر</option>
+                        <option value="approve">✅ قبول طلب تسجيل</option>
+                        <option value="login">🔓 إشعار تسجيل دخول</option>
+                        <option value="logout">🔒 إشعار تسجيل خروج</option>
+                        <option value="reminder">⏰ تذكير</option>
+                        <option value="promo">🎁 عرض / تهنئة</option>
+                    </select>
+                </div>
+
+                <!-- نص الرسالة -->
+                <div class="form-group">
+                    <label class="form-label">الرسالة</label>
+                    <textarea class="form-control" id="bulkMessageText" rows="8"
+                              placeholder="اكتب رسالتك هنا... يمكنك استخدام المتغيرات: {اسم المستخدم}, {كلمة المرور}, {رقم الهاتف}, {الصلاحية}, {الحالة}, {آخر دخول}, {آخر خروج}, {رابط الموقع}"
+                              style="font-family: monospace; direction: rtl;"></textarea>
+                </div>
+
+                <!-- معاينة الرسالة -->
+                <div class="message-preview" id="messagePreview" style="display: none;">
+                    <h5><i class="fas fa-eye"></i> معاينة الرسالة</h5>
+                    <div class="preview-content" id="previewContent"></div>
+                </div>
+
+                <!-- أزرار الإرسال -->
+                <div style="display: flex; gap: 10px; justify-content: center; margin-top: 20px; flex-wrap: wrap;">
+                    <button class="btn btn-success" onclick="previewBulkMessage()">
+                        <i class="fas fa-eye"></i> معاينة
+                    </button>
+                    <button class="btn btn-whatsapp" onclick="sendToSelectedUsers()" id="sendBulkBtn">
+                        <i class="fab fa-whatsapp"></i> إرسال للمختارين (<span id="sendCount">0</span>)
+                    </button>
+                    <button class="btn btn-primary" onclick="sendToSingleUser()" id="sendSingleBtn" style="display: none;">
+                        <i class="fas fa-user"></i> فتح محادثة فردية
+                    </button>
+                    <button class="btn btn-secondary" onclick="closeBulkWhatsAppModal()">
+                        <i class="fas fa-times"></i> إغلاق
+                    </button>
+                </div>
+
+                <!-- رسالة تأكيد الإرسال -->
+                <div id="bulkSendResult" class="alert" style="display: none; margin-top: 20px;"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ===== مودال رسالة واتساب فردية ===== -->
+    <div id="singleWhatsAppModal" class="modal">
+        <div class="modal-content" style="max-width: 600px;">
+            <div class="modal-header">
+                <h3><i class="fab fa-whatsapp text-success"></i> إرسال رسالة واتساب</h3>
+                <button class="close-btn" onclick="closeSingleWhatsAppModal()">✕ إغلاق</button>
+            </div>
+            <div class="modal-body">
+                <div class="alert alert-success" id="singleUserInfo">
+                    <div><strong>المستخدم:</strong> <span id="singleUserName"></span></div>
+                    <div><strong>رقم الهاتف:</strong> <span id="singleUserPhone"></span></div>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label">نوع الرسالة</label>
+                    <select class="form-select" id="singleMessageType" onchange="updateSingleMessageTemplate()">
+                        <option value="custom">📝 رسالة مخصصة</option>
+                        <option value="welcome">👋 رسالة ترحيب</option>
+                        <option value="promote">🎉 ترقية إلى أدمن</option>
+                        <option value="demote">ℹ️ تنزيل من أدمن</option>
+                        <option value="block">🚫 إشعار حظر</option>
+                        <option value="unblock">✅ إشعار إلغاء حظر</option>
+                        <option value="approve">✅ قبول طلب تسجيل</option>
+                        <option value="login">🔓 إشعار تسجيل دخول</option>
+                        <option value="logout">🔒 إشعار تسجيل خروج</option>
+                        <option value="reminder">⏰ تذكير</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label">الرسالة</label>
+                    <textarea class="form-control" id="singleMessageText" rows="12" style="font-family: monospace; direction: rtl;"></textarea>
+                </div>
+
+                <div style="display: flex; gap: 10px; justify-content: center; margin-top: 20px;">
+                    <button class="btn btn-success" onclick="copySingleMessage()">
+                        <i class="fas fa-copy"></i> نسخ الرسالة
+                    </button>
+                    <button class="btn btn-whatsapp" onclick="openSingleWhatsAppChat()">
+                        <i class="fab fa-whatsapp"></i> فتح واتساب
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+                // بيانات المستخدمين
+                const users = [
+                    @foreach (var u in approved)
+                    {
+                            <text>
+                            {
+                                id: @u.Id,
+                                username: '@u.Username',
+                                phone: '@u.Phone',
+                                password: '@u.Password',
+                                role: '@(u.IsAdmin ? "أدمن" : "مستخدم")',
+                                status: '@(u.IsOnline ? "متصل" : "غير متصل")',
+                                lastLogin: '@(u.LastLogin?.ToString("yyyy-MM-dd HH:mm") ?? "")',
+                                lastLogout: '@(u.LastLogout?.ToString("yyyy-MM-dd HH:mm") ?? "")',
+                                isAdmin: @(u.IsAdmin.ToString().ToLower()),
+                                isOnline: @(u.IsOnline.ToString().ToLower()),
+                                isBlocked: @(u.IsBlocked.ToString().ToLower()),
+                                isApproved: @(u.IsApproved.ToString().ToLower())
+                            },
+                            </text>
+                    }
+                ];
+
+                // عناصر الصفحة
+                const printPdfBtn = document.getElementById('printPdfBtn');
+                const selectionMessage = document.getElementById('selectionMessage');
+                const selectedUserName = document.getElementById('selectedUserName');
+                const tableRows = document.querySelectorAll('#usersTable tbody tr');
+
+                let selectedUserIndex = -1;
+                let selectedUserId = null;
+                let selectedUserPhone = null;
+                let selectedUsername = null;
+
+                // متغيرات الواتساب الجماعي
+                let allUsers = [];
+                let selectedUsers = [];
+
+                // رابط الموقع (يتم تحديده من الإعدادات)
+                const siteUrl = 'https://mobileshop.com'; // هذا الرابط سيتم استبداله من الإعدادات
+
+                // دالة تحديد المستخدم
+                function selectUser(index, username, phone, role, status, lastLogin, id, password, isBlocked, isApproved) {
+                    // إزالة التحديد من جميع الصفوف
+                    tableRows.forEach(row => {
+                        row.classList.remove('selected');
+                    });
+
+                    // تحديد الصف المختار
+                    tableRows[index].classList.add('selected');
+
+                    // حفظ المستخدم المحدد
+                    selectedUserIndex = index;
+                    selectedUserId = id;
+                    selectedUserPhone = phone;
+                    selectedUsername = username;
+
+                    // تفعيل زر PDF
+                    printPdfBtn.disabled = false;
+
+                    // إظهار رسالة التحديد
+                    selectionMessage.style.display = 'flex';
+                    selectedUserName.innerText = `تم تحديد: ${username}`;
+                }
+
+        // دالة طباعة المستخدم المحدد (محدثة)
+        function printSelectedUser() {
+            if (selectedUserIndex === -1) {
+                alert('الرجاء تحديد مستخدم أولاً');
+                return;
+            }
+
+            const user = users[selectedUserIndex];
+
+            // إنشاء عنصر مؤقت للفاتورة بحجم 80mm مضبوط
+            const printContainer = document.createElement('div');
+            printContainer.style.width = '80mm';
+            printContainer.style.padding = '2mm';
+            printContainer.style.margin = '0 auto';
+            printContainer.style.fontFamily = 'Segoe UI, Tahoma, sans-serif';
+            printContainer.style.background = 'white';
+            printContainer.style.direction = 'rtl';
+            printContainer.style.boxSizing = 'border-box';
+            printContainer.style.fontSize = '9px';
+            printContainer.style.lineHeight = '1.3';
+            printContainer.style.overflow = 'hidden';
+            printContainer.style.wordWrap = 'break-word';
+
+            printContainer.innerHTML = `
+                <div style="width: 100%; max-width: 76mm; margin: 0 auto; background: #fff; border-radius: 2mm; padding: 2mm; box-shadow: 0 1px 3px rgba(0,0,0,0.1); box-sizing: border-box;">
+                    <!-- رأس الفاتورة -->
+                    <div style="text-align: center; border-bottom: 1px dashed #f39c12; padding-bottom: 1.5mm; margin-bottom: 2mm; width: 100%;">
+                        <h1 style="font-size: 14px; font-weight: bold; color: #f39c12; margin: 0;">📱 Mobile Shop</h1>
+                        <div style="color: #7f8c8d; font-size: 7px; margin-top: 1mm;">01064211484</div>
+                        <div style="background: #f39c12; color: white; padding: 1mm; font-size: 9px; border-radius: 2mm; margin-top: 1.5mm; font-weight: bold; width: 100%; box-sizing: border-box;">
+                            بيانات المستخدم
+                        </div>
+                    </div>
+
+                    <!-- معلومات المستخدم -->
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1mm; margin-bottom: 2mm; width: 100%;">
+                        <div style="background: #f8f9fa; padding: 1mm; border-radius: 1mm; border-right: 1px solid #f39c12; box-sizing: border-box;">
+                            <div style="font-size: 6px; color: #7f8c8d;">معرف المستخدم</div>
+                            <div style="font-size: 8px; font-weight: bold; color: #2c3e50; word-break: break-word;">${user.id}</div>
+                        </div>
+                        <div style="background: #f8f9fa; padding: 1mm; border-radius: 1mm; border-right: 1px solid #f39c12; box-sizing: border-box;">
+                            <div style="font-size: 6px; color: #7f8c8d;">التاريخ</div>
+                            <div style="font-size: 8px; font-weight: bold; color: #2c3e50;">${new Date().toLocaleDateString('ar-EG')}</div>
+                        </div>
+                        <div style="background: #f8f9fa; padding: 1mm; border-radius: 1mm; border-right: 1px solid #f39c12; box-sizing: border-box;">
+                            <div style="font-size: 6px; color: #7f8c8d;">الساعة</div>
+                            <div style="font-size: 8px; font-weight: bold; color: #2c3e50;">${new Date().toLocaleTimeString('ar-EG')}</div>
+                        </div>
+                        <div style="background: #f8f9fa; padding: 1mm; border-radius: 1mm; border-right: 1px solid #f39c12; box-sizing: border-box;">
+                            <div style="font-size: 6px; color: #7f8c8d;">تمت الطباعة بواسطة</div>
+                            <div style="font-size: 8px; font-weight: bold; color: #2c3e50; word-break: break-word;">@username</div>
+                        </div>
+                    </div>
+
+                    <!-- خط منقط -->
+                    <div style="border-top: 1px dashed #ccc; margin: 1.5mm 0; width: 100%;"></div>
+
+                    <!-- اسم المستخدم بشكل بارز -->
+                    <div style="background: #f39c12; color: white; padding: 1.5mm; border-radius: 1.5mm; text-align: center; font-size: 10px; font-weight: bold; margin-bottom: 2mm; width: 100%; box-sizing: border-box; word-break: break-word;">
+                        ${user.username}
+                    </div>
+
+                    <!-- تفاصيل المستخدم -->
+                    <div style="margin: 2mm 0; width: 100%;">
+                        <div style="display: flex; justify-content: space-between; padding: 0.75mm 0; border-bottom: 1px dotted #eee; font-size: 8px; width: 100%;">
+                            <span style="color: #f39c12; font-weight: bold;">👤 الاسم:</span>
+                            <span style="color: #333; text-align: left; word-break: break-word; max-width: 50%;">${user.username}</span>
+                        </div>
+                        <div style="display: flex; justify-content: space-between; padding: 0.75mm 0; border-bottom: 1px dotted #eee; font-size: 8px; width: 100%;">
+                            <span style="color: #f39c12; font-weight: bold;">📞 الهاتف:</span>
+                            <span style="color: #333; text-align: left; word-break: break-word; max-width: 50%;">${user.phone}</span>
+                        </div>
+                        <div style="display: flex; justify-content: space-between; padding: 0.75mm 0; border-bottom: 1px dotted #eee; font-size: 8px; width: 100%;">
+                            <span style="color: #f39c12; font-weight: bold;">🔑 كلمة السر:</span>
+                            <span style="color: #333; text-align: left; word-break: break-word; max-width: 50%;">${user.password}</span>
+                        </div>
+                        <div style="display: flex; justify-content: space-between; padding: 0.75mm 0; border-bottom: 1px dotted #eee; font-size: 8px; width: 100%;">
+                            <span style="color: #f39c12; font-weight: bold;">⚙️ الصلاحية:</span>
+                            <span style="color: #333; text-align: left;">${user.role}</span>
+                        </div>
+                        <div style="display: flex; justify-content: space-between; padding: 0.75mm 0; border-bottom: 1px dotted #eee; font-size: 8px; width: 100%;">
+                            <span style="color: #f39c12; font-weight: bold;">📱 الحالة:</span>
+                            <span style="color: ${user.isOnline ? '#27ae60' : '#95a5a6'}; text-align: left; font-weight: bold;">${user.status}</span>
+                        </div>
+                        <div style="display: flex; justify-content: space-between; padding: 0.75mm 0; border-bottom: 1px dotted #eee; font-size: 8px; width: 100%;">
+                            <span style="color: #f39c12; font-weight: bold;">🚫 محظور:</span>
+                            <span style="color: ${user.isBlocked ? '#e74c3c' : '#27ae60'}; text-align: left; font-weight: bold;">${user.isBlocked ? 'نعم' : 'لا'}</span>
+                        </div>
+                        <div style="display: flex; justify-content: space-between; padding: 0.75mm 0; border-bottom: 1px dotted #eee; font-size: 8px; width: 100%;">
+                            <span style="color: #f39c12; font-weight: bold;">📅 آخر دخول:</span>
+                            <span style="color: #333; text-align: left; word-break: break-word; max-width: 50%;">${user.lastLogin || 'لم يسجل'}</span>
+                        </div>
+                        <div style="display: flex; justify-content: space-between; padding: 0.75mm 0; border-bottom: 1px dotted #eee; font-size: 8px; width: 100%;">
+                            <span style="color: #f39c12; font-weight: bold;">📅 آخر خروج:</span>
+                            <span style="color: #333; text-align: left; word-break: break-word; max-width: 50%;">${user.lastLogout || 'لم يسجل'}</span>
+                        </div>
+                    </div>
+
+                    <!-- خاتمة -->
+                    <div style="background: linear-gradient(135deg, #f39c12, #e67e22); color: white; border-radius: 1.5mm; padding: 1.5mm; margin: 2mm 0; width: 100%; box-sizing: border-box;">
+                        <div style="display: flex; justify-content: center; font-size: 9px; font-weight: bold;">
+                            <span>✅ مستخدم نشط في النظام</span>
+                        </div>
+                    </div>
+
+                    <!-- خط منقط -->
+                    <div style="border-top: 1px dashed #ccc; margin: 1.5mm 0; width: 100%;"></div>
+
+                    <!-- الفوتر -->
+                    <div style="margin-top: 1.5mm; font-size: 6px; color: #777; text-align: center; border-top: 1px solid #eee; padding-top: 1mm; width: 100%;">
+                        <div>Mobile📱Shop - ${new Date().toLocaleDateString('ar-EG')}</div>
+                        <div>شكراً لتعاملكم معنا ✨</div>
+                    </div>
+                </div>
+            `;
+
+            document.body.appendChild(printContainer);
+
+            // تحويل إلى PDF بدقة عالية
+            html2canvas(printContainer, {
+                scale: 2,
+                backgroundColor: '#ffffff',
+                logging: false,
+                windowWidth: printContainer.scrollWidth,
+                windowHeight: printContainer.scrollHeight,
+                onclone: function(clonedDoc, element) {
+                    // التأكد من أن العنصر المنسوخ له نفس الأبعاد
+                    element.style.width = '80mm';
+                    element.style.padding = '2mm';
+                    element.style.margin = '0 auto';
+                }
+            }).then(canvas => {
+                try {
+                    const { jsPDF } = window.jspdf;
+
+                    // حساب الأبعاد بدقة
+                    const imgWidth = 80; // mm
+                    const imgHeight = (canvas.height * imgWidth) / canvas.width;
+
+                    const pdf = new jsPDF({
+                        orientation: 'portrait',
+                        unit: 'mm',
+                        format: [imgWidth, imgHeight]
+                    });
+
+                    const imgData = canvas.toDataURL('image/png');
+                    pdf.addImage(imgData, 'PNG', 0, 0, imgWidth, imgHeight, undefined, 'FAST');
+
+                    pdf.save(`مستخدم_${user.username}.pdf`);
+
+                    document.body.removeChild(printContainer);
+                } catch (error) {
+                    console.error('خطأ في إنشاء PDF:', error);
+                    alert('حدث خطأ في إنشاء PDF');
+                    if (printContainer.parentNode) {
+                        document.body.removeChild(printContainer);
+                    }
+                }
+            }).catch(error => {
+                console.error('خطأ في تحويل HTML إلى Canvas:', error);
+                alert('حدث خطأ في تحويل الصفحة إلى PDF');
+                if (printContainer.parentNode) {
+                    document.body.removeChild(printContainer);
+                }
+            });
+        }
+                // ===== دوال الواتساب الجماعي =====
+
+                // فتح مودال الرسائل الجماعية
+                function showBulkWhatsAppModal() {
+                    document.getElementById('bulkWhatsAppModal').style.display = 'block';
+                    loadUsersForBulk();
+                }
+
+                function closeBulkWhatsAppModal() {
+                    document.getElementById('bulkWhatsAppModal').style.display = 'none';
+                    selectedUsers = [];
+                }
+
+                // تحميل المستخدمين للرسائل الجماعية
+                function loadUsersForBulk() {
+                    fetch('/Settings/GetAllUsersForBulk')
+                        .then(res => res.json())
+                        .then(data => {
+                            if (data.success) {
+                                allUsers = data.users;
+                                displayAvailableUsers(allUsers);
+                                updateSelectedCounts();
+                            } else {
+                                alert('❌ فشل في تحميل قائمة المستخدمين');
+                            }
+                        })
+                        .catch(err => {
+                            console.error('خطأ:', err);
+                            alert('❌ حدث خطأ في تحميل المستخدمين');
+                        });
+                }
+
+                // عرض المستخدمين المتاحين
+                function displayAvailableUsers(users) {
+                    const container = document.getElementById('availableUsersList');
+
+                    if (!users || users.length === 0) {
+                        container.innerHTML = '<div class="text-center p-3 text-muted">لا يوجد مستخدمين</div>';
+                        return;
+                    }
+
+                    let html = '';
+                    users.forEach(u => {
+                        const isSelected = selectedUsers.some(su => su.id === u.id);
+                        const roleClass = u.isAdmin ? 'role-admin' : 'role-user';
+                        const statusClass = u.isBlocked ? 'status-blocked' : (u.isOnline ? 'status-online' : 'status-offline');
+                        const statusText = u.isBlocked ? 'محظور' : (u.isOnline ? 'متصل' : 'غير متصل');
+
+                        html += `
+                            <div class="user-item ${isSelected ? 'selected' : ''}" onclick="toggleUser(this, ${u.id})">
+                                <input type="checkbox" class="user-checkbox" ${isSelected ? 'checked' : ''}
+                                       onchange="toggleUser(this, ${u.id})" onclick="event.stopPropagation()">
+                                <div class="user-info">
+                                    <div class="user-name">
+                                        ${u.username}
+                                        <span class="user-role ${roleClass}">${u.role}</span>
+                                    </div>
+                                    <div class="user-details">
+                                        <span class="user-phone">📞 ${u.phone}</span>
+                                        <span class="${statusClass}"><i class="fas fa-circle"></i> ${statusText}</span>
+                                        <span>📅 آخر دخول: ${u.lastLogin || 'لم يسجل'}</span>
+                                    </div>
+                                </div>
+                            </div>
+                        `;
+                    });
+
+                    container.innerHTML = html;
+                    document.getElementById('availableCount').innerText = users.length;
+                }
+
+                // عرض المستخدمين المختارين
+                function displaySelectedUsers(users) {
+                    const container = document.getElementById('selectedUsersList');
+
+                    if (!users || users.length === 0) {
+                        container.innerHTML = '<div class="text-center p-3 text-muted">لا يوجد مستخدمين مختارين</div>';
+                        return;
+                    }
+
+                    let html = '';
+                    users.forEach(u => {
+                        const roleClass = u.isAdmin ? 'role-admin' : 'role-user';
+                        const statusClass = u.isBlocked ? 'status-blocked' : (u.isOnline ? 'status-online' : 'status-offline');
+                        const statusText = u.isBlocked ? 'محظور' : (u.isOnline ? 'متصل' : 'غير متصل');
+
+                        html += `
+                            <div class="user-item selected" onclick="removeFromSelected(${u.id})">
+                                <i class="fas fa-check-circle" style="color: #27ae60;"></i>
+                                <div class="user-info">
+                                    <div class="user-name">
+                                        ${u.username}
+                                        <span class="user-role ${roleClass}">${u.role}</span>
+                                    </div>
+                                    <div class="user-details">
+                                        <span class="user-phone">📞 ${u.phone}</span>
+                                        <span class="${statusClass}"><i class="fas fa-circle"></i> ${statusText}</span>
+                                        <span>📅 آخر دخول: ${u.lastLogin || 'لم يسجل'}</span>
+                                    </div>
+                                </div>
+                                <i class="fas fa-times" style="color: #dc3545; margin-right: auto;" onclick="removeFromSelected(${u.id}, event)"></i>
+                            </div>
+                        `;
+                    });
+
+                    container.innerHTML = html;
+                }
+
+                // تبديل تحديد مستخدم
+                function toggleUser(element, userId) {
+                    const checkbox = element.classList.contains('user-item') ?
+                        element.querySelector('.user-checkbox') : element;
+
+                    const user = allUsers.find(u => u.id === userId);
+                    if (!user) return;
+
+                    if (checkbox.checked) {
+                        // إضافة إلى المختارين
+                        if (!selectedUsers.some(u => u.id === userId)) {
+                            selectedUsers.push(user);
+                        }
+                    } else {
+                        // إزالة من المختارين
+                        selectedUsers = selectedUsers.filter(u => u.id !== userId);
+                    }
+
+                    // تحديث واجهة المستخدم
+                    updateSelectedCounts();
+                    filterAvailableUsers();
+                    filterSelectedUsers();
+                    updateSendButtonState();
+                }
+
+                // إزالة من المختارين
+                function removeFromSelected(userId, event) {
+                    if (event) event.stopPropagation();
+
+                    selectedUsers = selectedUsers.filter(u => u.id !== userId);
+
+                    // تحديث المربعات في القائمة المتاحة
+                    const checkboxes = document.querySelectorAll('#availableUsersList .user-checkbox');
+                    checkboxes.forEach(cb => {
+                        const item = cb.closest('.user-item');
+                        const itemUserId = parseInt(item.getAttribute('onclick')?.match(/\d+/)?.[0] || '0');
+                        if (itemUserId === userId) {
+                            cb.checked = false;
+                            item.classList.remove('selected');
+                        }
+                    });
+
+                    updateSelectedCounts();
+                    filterSelectedUsers();
+                    updateSendButtonState();
+                }
+
+                // تحديد كل المستخدمين
+                function selectAllUsers() {
+                    const visibleCheckboxes = document.querySelectorAll('#availableUsersList .user-checkbox:not([style*="display: none"])');
+                    visibleCheckboxes.forEach(cb => {
+                        if (!cb.checked) {
+                            cb.checked = true;
+                            const item = cb.closest('.user-item');
+                            const userId = parseInt(item.getAttribute('onclick')?.match(/\d+/)?.[0] || '0');
+                            const user = allUsers.find(u => u.id === userId);
+
+                            if (user && !selectedUsers.some(u => u.id === userId)) {
+                                selectedUsers.push(user);
+                            }
+                            item.classList.add('selected');
+                        }
+                    });
+
+                    updateSelectedCounts();
+                    filterSelectedUsers();
+                    updateSendButtonState();
+                }
+
+                // إلغاء تحديد الكل
+                function deselectAllUsers() {
+                    selectedUsers = [];
+
+                    document.querySelectorAll('#availableUsersList .user-checkbox').forEach(cb => {
+                        cb.checked = false;
+                        cb.closest('.user-item').classList.remove('selected');
+                    });
+
+                    updateSelectedCounts();
+                    filterSelectedUsers();
+                    updateSendButtonState();
+                }
+
+                // تحديث القائمة
+                function refreshUsersList() {
+                    loadUsersForBulk();
+                }
+
+                // تصفية المستخدمين المتاحين
+                function filterAvailableUsers() {
+                    const searchTerm = document.getElementById('availableSearch').value.toLowerCase();
+                    const items = document.querySelectorAll('#availableUsersList .user-item');
+
+                    items.forEach(item => {
+                        const text = item.innerText.toLowerCase();
+                        if (text.includes(searchTerm)) {
+                            item.style.display = 'flex';
+                        } else {
+                            item.style.display = 'none';
+                        }
+                    });
+                }
+
+                // تصفية المستخدمين المختارين
+                function filterSelectedUsers() {
+                    const searchTerm = document.getElementById('selectedSearch').value.toLowerCase();
+                    const items = document.querySelectorAll('#selectedUsersList .user-item');
+
+                    items.forEach(item => {
+                        const text = item.innerText.toLowerCase();
+                        if (text.includes(searchTerm)) {
+                            item.style.display = 'flex';
+                        } else {
+                            item.style.display = 'none';
+                        }
+                    });
+
+                    displaySelectedUsers(selectedUsers);
+                }
+
+                // تحديث العدادات
+                function updateSelectedCounts() {
+                    document.getElementById('selectedCount').innerText = selectedUsers.length;
+                    document.getElementById('sendCount').innerText = selectedUsers.length;
+                }
+
+                // تحديث حالة زر الإرسال
+                function updateSendButtonState() {
+                    const sendBtn = document.getElementById('sendBulkBtn');
+                    const singleBtn = document.getElementById('sendSingleBtn');
+
+                    if (selectedUsers.length === 1) {
+                        sendBtn.style.display = 'inline-flex';
+                        singleBtn.style.display = 'inline-flex';
+                    } else if (selectedUsers.length > 1) {
+                        sendBtn.style.display = 'inline-flex';
+                        singleBtn.style.display = 'none';
+                    } else {
+                        sendBtn.style.display = 'inline-flex';
+                        singleBtn.style.display = 'none';
+                    }
+                }
+
+                // تحديث قالب الرسالة الجماعية
+                function updateBulkMessageTemplate() {
+                    const type = document.getElementById('bulkMessageType').value;
+                    let message = '';
+
+                    switch(type) {
+                        case 'welcome':
+                            message = `👋 *مرحباً بك في نظام Mobile Shop*
+
+        عزيزي {اسم المستخدم}،
+        تم إنشاء حسابك بنجاح في النظام.
+
+        ━━━━━━━━━━━━━━━━
+        📌 *بيانات الدخول:*
+        👤 *اسم المستخدم:* {اسم المستخدم}
+        🔑 *كلمة المرور:* {كلمة المرور}
+        📞 *رقم الهاتف:* {رقم الهاتف}
+        ━━━━━━━━━━━━━━━━
+        ✅ *حالتك:* {الحالة}
+        👑 *الصلاحية:* {الصلاحية}
+        📅 *آخر دخول:* {آخر دخول}
+        ━━━━━━━━━━━━━━━━
+        📱 *رابط الدخول:*
+        {رابط الموقع}
+
+        📞 *للتواصل والاستفسار:* 01064211484
+        📍 *العنوان:* ٥ شارع المختار، ميامي، الإسكندرية
+        ━━━━━━━━━━━━━━━━
+        🌟 شكراً لانضمامك إلينا`;
+                            break;
+
+                        case 'promote':
+                            message = `🎉 *تهانينا! تم ترقيتك إلى أدمن*
+
+        عزيزي {اسم المستخدم}،
+        تم ترقية حسابك إلى مسؤول (أدمن) في النظام.
+
+        ━━━━━━━━━━━━━━━━
+        📌 *بيانات حسابك:*
+        👤 *اسم المستخدم:* {اسم المستخدم}
+        📞 *رقم الهاتف:* {رقم الهاتف}
+        ✅ *الحالة:* {الحالة}
+        👑 *الصلاحية الجديدة:* أدمن
+        ━━━━━━━━━━━━━━━━
+        📱 *رابط الدخول:*
+        {رابط الموقع}
+
+        📞 للاستفسار: 01064211484
+        📍 العنوان: ٥ شارع المختار، ميامي
+        ━━━━━━━━━━━━━━━━
+        🌟 مع أطيب التمنيات`;
+                            break;
+
+                        case 'demote':
+                            message = `ℹ️ *تحديث صلاحيات الحساب*
+
+        عزيزي {اسم المستخدم}،
+        تم تعديل صلاحيات حسابك إلى مستخدم عادي.
+
+        ━━━━━━━━━━━━━━━━
+        📌 *بيانات حسابك:*
+        👤 *اسم المستخدم:* {اسم المستخدم}
+        📞 *رقم الهاتف:* {رقم الهاتف}
+        ✅ *الحالة:* {الحالة}
+        👑 *الصلاحية الجديدة:* مستخدم
+        ━━━━━━━━━━━━━━━━
+        📱 *رابط الدخول:*
+        {رابط الموقع}
+
+        📞 للاستفسار: 01064211484
+        ━━━━━━━━━━━━━━━━`;
+                            break;
+
+                        case 'block':
+                            message = `🚫 *إشعار حظر الحساب*
+
+        عزيزي {اسم المستخدم}،
+        تم حظر حسابك في النظام مؤقتاً.
+        يرجى التواصل مع الإدارة للمزيد من المعلومات.
+
+        ━━━━━━━━━━━━━━━━
+        📌 *بيانات حسابك:*
+        👤 *اسم المستخدم:* {اسم المستخدم}
+        📞 *رقم الهاتف:* {رقم الهاتف}
+        ✅ *الحالة الحالية:* محظور
+        👑 *الصلاحية:* {الصلاحية}
+        ━━━━━━━━━━━━━━━━
+        📞 *للتواصل مع الإدارة:* 01064211484
+        ━━━━━━━━━━━━━━━━`;
+                            break;
+
+                        case 'unblock':
+                            message = `✅ *إشعار إلغاء الحظر*
+
+        عزيزي {اسم المستخدم}،
+        تم إلغاء حظر حسابك في النظام.
+        يمكنك الآن الدخول إلى حسابك كالمعتاد.
+
+        ━━━━━━━━━━━━━━━━
+        📌 *بيانات حسابك:*
+        👤 *اسم المستخدم:* {اسم المستخدم}
+        📞 *رقم الهاتف:* {رقم الهاتف}
+        ✅ *الحالة الحالية:* نشط
+        👑 *الصلاحية:* {الصلاحية}
+        ━━━━━━━━━━━━━━━━
+        📱 *رابط الدخول:*
+        {رابط الموقع}
+
+        📞 للاستفسار: 01064211484
+        ━━━━━━━━━━━━━━━━`;
+                            break;
+
+                        case 'approve':
+                            message = `✅ *تم قبول طلب التسجيل*
+
+        عزيزي {اسم المستخدم}،
+        تمت الموافقة على طلب تسجيلك في النظام.
+
+        ━━━━━━━━━━━━━━━━
+        📌 *بيانات الدخول:*
+        👤 *اسم المستخدم:* {اسم المستخدم}
+        🔑 *كلمة المرور:* {كلمة المرور}
+        📞 *رقم الهاتف:* {رقم الهاتف}
+        ━━━━━━━━━━━━━━━━
+        ✅ *حالتك:* {الحالة}
+        👑 *الصلاحية:* {الصلاحية}
+        ━━━━━━━━━━━━━━━━
+        📱 *رابط الدخول:*
+        {رابط الموقع}
+
+        📞 *للتواصل والاستفسار:* 01064211484
+        📍 *العنوان:* ٥ شارع المختار، ميامي، الإسكندرية
+        ━━━━━━━━━━━━━━━━
+        🌟 مرحباً بك في فريقنا`;
+                            break;
+
+                        case 'login':
+                            message = `🔓 *تم تسجيل الدخول إلى حسابك*
+
+        عزيزي {اسم المستخدم}،
+        تم تسجيل دخولك إلى النظام بنجاح.
+
+        ━━━━━━━━━━━━━━━━
+        📌 *معلومات الجلسة:*
+        👤 *المستخدم:* {اسم المستخدم}
+        📞 *رقم الهاتف:* {رقم الهاتف}
+        ⏰ *وقت الدخول:* ${new Date().toLocaleString('ar-EG')}
+        ✅ *الحالة:* متصل حالياً
+        ━━━━━━━━━━━━━━━━
+        📱 *رابط الدخول:*
+        {رابط الموقع}
+
+        📞 للاستفسار: 01064211484
+        ━━━━━━━━━━━━━━━━`;
+                            break;
+
+                        case 'logout':
+                            message = `🔒 *تم تسجيل الخروج من حسابك*
+
+        عزيزي {اسم المستخدم}،
+        تم تسجيل خروجك من النظام بنجاح.
+
+        ━━━━━━━━━━━━━━━━
+        📌 *معلومات الجلسة:*
+        👤 *المستخدم:* {اسم المستخدم}
+        📞 *رقم الهاتف:* {رقم الهاتف}
+        ⏰ *وقت الخروج:* ${new Date().toLocaleString('ar-EG')}
+        📅 *آخر دخول:* {آخر دخول}
+        ✅ *الحالة:* غير متصل
+        ━━━━━━━━━━━━━━━━
+        📱 *رابط الدخول:*
+        {رابط الموقع}
+
+        📞 للاستفسار: 01064211484
+        ━━━━━━━━━━━━━━━━
+        🌟 نتمنى لك يوماً سعيداً`;
+                            break;
+
+                        case 'reminder':
+                            message = `⏰ *تذكير*
+
+        عزيزي {اسم المستخدم}،
+        نذكرك بتسجيل الدخول إلى النظام ومتابعة مهامك.
+
+        ━━━━━━━━━━━━━━━━
+        📌 *بيانات حسابك:*
+        👤 *اسم المستخدم:* {اسم المستخدم}
+        📞 *رقم الهاتف:* {رقم الهاتف}
+        📅 *آخر دخول:* {آخر دخول}
+        ✅ *الحالة:* {الحالة}
+        ━━━━━━━━━━━━━━━━
+        📱 *رابط الدخول:*
+        {رابط الموقع}
+
+        📞 للاستفسار: 01064211484
+        ━━━━━━━━━━━━━━━━`;
+                            break;
+
+                        case 'promo':
+                            message = `🎁 *عرض خاص*
+
+        عزيزي {اسم المستخدم}،
+        نقدم لكم أقوى العروض على الصيانة
+        خصومات تصل إلى 20%
+
+        ━━━━━━━━━━━━━━━━
+        📍 *العنوان:* ٥ شارع المختار، ميامي، الإسكندرية
+        📞 *للتواصل:* 01064211484
+        🕐 *ساعات العمل:* من ١٠ صباحاً إلى ١٠ مساءً
+        ━━━━━━━━━━━━━━━━
+
+        📱 *رابط الموقع:*
+        {رابط الموقع}
+
+        🌟 عرض ساري لفترة محدودة`;
+                            break;
+
+                        default:
+                            message = document.getElementById('bulkMessageText').value;
+                            break;
+                    }
+
+                    document.getElementById('bulkMessageText').value = message;
+                }
+
+                // معاينة الرسالة الجماعية
+                function previewBulkMessage() {
+                    const message = document.getElementById('bulkMessageText').value;
+                    const previewDiv = document.getElementById('messagePreview');
+                    const previewContent = document.getElementById('previewContent');
+
+                    if (selectedUsers.length > 0) {
+                        const sampleUser = selectedUsers[0];
+                        let sampleMessage = message
+                            .replace(/{اسم المستخدم}/g, sampleUser.username)
+                            .replace(/{كلمة المرور}/g, sampleUser.password || '******')
+                            .replace(/{رقم الهاتف}/g, sampleUser.phone)
+                            .replace(/{الصلاحية}/g, sampleUser.role)
+                            .replace(/{الحالة}/g, sampleUser.isBlocked ? 'محظور' : (sampleUser.isOnline ? 'متصل' : 'غير متصل'))
+                            .replace(/{آخر دخول}/g, sampleUser.lastLogin || 'لم يسجل')
+                            .replace(/{آخر خروج}/g, sampleUser.lastLogout || 'لم يسجل')
+                            .replace(/{رابط الموقع}/g, siteUrl);
+
+                        previewContent.innerText = sampleMessage;
+                    } else {
+                        previewContent.innerText = message;
+                    }
+
+                    previewDiv.style.display = 'block';
+                }
+
+                // إرسال للمستخدمين المختارين
+                function sendToSelectedUsers() {
+                    if (selectedUsers.length === 0) {
+                        alert('❌ الرجاء اختيار مستخدم واحد على الأقل');
+                        return;
+                    }
+
+                    const message = document.getElementById('bulkMessageText').value;
+                    if (!message.trim()) {
+                        alert('❌ الرجاء كتابة الرسالة');
+                        return;
+                    }
+
+                    const resultDiv = document.getElementById('bulkSendResult');
+                    resultDiv.style.display = 'block';
+                    resultDiv.className = 'alert alert-info';
+                    resultDiv.innerHTML = '<i class="fas fa-spinner fa-spin"></i> جاري فتح واتساب...';
+
+                    let successCount = 0;
+                    let failCount = 0;
+
+                    selectedUsers.forEach((user, index) => {
+                        setTimeout(() => {
+                            try {
+                                let personalizedMessage = message
+                                    .replace(/{اسم المستخدم}/g, user.username)
+                                    .replace(/{كلمة المرور}/g, user.password || '******')
+                                    .replace(/{رقم الهاتف}/g, user.phone)
+                                    .replace(/{الصلاحية}/g, user.role)
+                                    .replace(/{الحالة}/g, user.isBlocked ? 'محظور' : (user.isOnline ? 'متصل' : 'غير متصل'))
+                                    .replace(/{آخر دخول}/g, user.lastLogin || 'لم يسجل')
+                                    .replace(/{آخر خروج}/g, user.lastLogout || 'لم يسجل')
+                                    .replace(/{رابط الموقع}/g, siteUrl);
+
+                                let phone = user.phone.replace(/[^0-9]/g, '');
+                                if (phone.startsWith('0')) {
+                                    phone = '20' + phone.substring(1);
+                                }
+
+                                const url = `https://wa.me/${phone}?text=${encodeURIComponent(personalizedMessage)}`;
+                                window.open(url, '_blank');
+                                successCount++;
+                            } catch (err) {
+                                console.error('خطأ في فتح واتساب:', err);
+                                failCount++;
+                            }
+                        }, index * 1000);
+                    });
+
+                    resultDiv.className = 'alert alert-success';
+                    resultDiv.innerHTML = `
+                        <i class="fas fa-check-circle"></i>
+                        تم فتح ${successCount} محادثة واتساب بنجاح
+                        ${failCount > 0 ? `، فشل فتح ${failCount} محادثة` : ''}
+                    `;
+                }
+
+                // إرسال لمستخدم واحد فقط
+                function sendToSingleUser() {
+                    if (selectedUsers.length !== 1) {
+                        alert('❌ الرجاء اختيار مستخدم واحد فقط');
+                        return;
+                    }
+
+                    const user = selectedUsers[0];
+                    const message = document.getElementById('bulkMessageText').value;
+
+                    if (!message.trim()) {
+                        alert('❌ الرجاء كتابة الرسالة');
+                        return;
+                    }
+
+                    let personalizedMessage = message
+                        .replace(/{اسم المستخدم}/g, user.username)
+                        .replace(/{كلمة المرور}/g, user.password || '******')
+                        .replace(/{رقم الهاتف}/g, user.phone)
+                        .replace(/{الصلاحية}/g, user.role)
+                        .replace(/{الحالة}/g, user.isBlocked ? 'محظور' : (user.isOnline ? 'متصل' : 'غير متصل'))
+                        .replace(/{آخر دخول}/g, user.lastLogin || 'لم يسجل')
+                        .replace(/{آخر خروج}/g, user.lastLogout || 'لم يسجل')
+                        .replace(/{رابط الموقع}/g, siteUrl);
+
+                    let phone = user.phone.replace(/[^0-9]/g, '');
+                    if (phone.startsWith('0')) {
+                        phone = '20' + phone.substring(1);
+                    }
+
+                    const url = `https://wa.me/${phone}?text=${encodeURIComponent(personalizedMessage)}`;
+                    window.open(url, '_blank');
+
+                    const resultDiv = document.getElementById('bulkSendResult');
+                    resultDiv.style.display = 'block';
+                    resultDiv.className = 'alert alert-success';
+                    resultDiv.innerHTML = '<i class="fas fa-check-circle"></i> تم فتح محادثة واتساب';
+                }
+
+                // ===== دوال الواتساب الفردي =====
+
+                // فتح مودال واتساب لمستخدم واحد
+                function showUserWhatsAppModal(userId, username, phone) {
+                    selectedUserId = userId;
+                    selectedUsername = username;
+                    selectedUserPhone = phone;
+
+                    document.getElementById('singleUserName').innerText = username;
+                    document.getElementById('singleUserPhone').innerText = phone;
+
+                    updateSingleMessageTemplate();
+                    document.getElementById('singleWhatsAppModal').style.display = 'block';
+                }
+
+                function closeSingleWhatsAppModal() {
+                    document.getElementById('singleWhatsAppModal').style.display = 'none';
+                }
+
+                // تحديث قالب الرسالة الفردية
+                function updateSingleMessageTemplate() {
+                    const type = document.getElementById('singleMessageType').value;
+                    const username = selectedUsername;
+                    let message = '';
+
+                    const user = users.find(u => u.id == selectedUserId) || {
+                        role: 'مستخدم',
+                        isBlocked: false,
+                        isOnline: false,
+                        phone: selectedUserPhone,
+                        password: '******',
+                        lastLogin: '',
+                        lastLogout: ''
+                    };
+
+                    const role = user.role || 'مستخدم';
+                    const status = user.isBlocked ? 'محظور' : (user.isOnline ? 'متصل' : 'غير متصل');
+                    const lastLogin = user.lastLogin || 'لم يسجل';
+                    const lastLogout = user.lastLogout || 'لم يسجل';
+
+                    switch(type) {
+                        case 'welcome':
+                            message = `👋 *مرحباً بك في نظام Mobile Shop*
+
+        عزيزي ${username}،
+        تم إنشاء حسابك بنجاح في النظام.
+
+        ━━━━━━━━━━━━━━━━
+        📌 *بيانات الدخول:*
+        👤 *اسم المستخدم:* ${username}
+        🔑 *كلمة المرور:* ${user.password}
+        📞 *رقم الهاتف:* ${user.phone}
+        ━━━━━━━━━━━━━━━━
+        ✅ *حالتك:* ${status}
+        👑 *الصلاحية:* ${role}
+        ━━━━━━━━━━━━━━━━
+        📱 *رابط الدخول:*
+        ${siteUrl}
+
+        📞 *للتواصل والاستفسار:* 01064211484
+        📍 *العنوان:* ٥ شارع المختار، ميامي، الإسكندرية
+        ━━━━━━━━━━━━━━━━
+        🌟 شكراً لانضمامك إلينا`;
+                            break;
+
+                        case 'promote':
+                            message = `🎉 *تهانينا! تم ترقيتك إلى أدمن*
+
+        عزيزي ${username}،
+        تم ترقية حسابك إلى مسؤول (أدمن) في النظام.
+
+        ━━━━━━━━━━━━━━━━
+        📌 *بيانات حسابك:*
+        👤 *اسم المستخدم:* ${username}
+        📞 *رقم الهاتف:* ${user.phone}
+        ✅ *الحالة:* ${status}
+        👑 *الصلاحية الجديدة:* أدمن
+        ━━━━━━━━━━━━━━━━
+        📱 *رابط الدخول:*
+        ${siteUrl}
+
+        📞 للاستفسار: 01064211484
+        📍 العنوان: ٥ شارع المختار، ميامي
+        ━━━━━━━━━━━━━━━━
+        🌟 مع أطيب التمنيات`;
+                            break;
+
+                        case 'demote':
+                            message = `ℹ️ *تحديث صلاحيات الحساب*
+
+        عزيزي ${username}،
+        تم تعديل صلاحيات حسابك إلى مستخدم عادي.
+
+        ━━━━━━━━━━━━━━━━
+        📌 *بيانات حسابك:*
+        👤 *اسم المستخدم:* ${username}
+        📞 *رقم الهاتف:* ${user.phone}
+        ✅ *الحالة:* ${status}
+        👑 *الصلاحية الجديدة:* مستخدم
+        ━━━━━━━━━━━━━━━━
+        📱 *رابط الدخول:*
+        ${siteUrl}
+
+        📞 للاستفسار: 01064211484
+        ━━━━━━━━━━━━━━━━`;
+                            break;
+
+                        case 'block':
+                            message = `🚫 *إشعار حظر الحساب*
+
+        عزيزي ${username}،
+        تم حظر حسابك في النظام مؤقتاً.
+        يرجى التواصل مع الإدارة للمزيد من المعلومات.
+
+        ━━━━━━━━━━━━━━━━
+        📌 *بيانات حسابك:*
+        👤 *اسم المستخدم:* ${username}
+        📞 *رقم الهاتف:* ${user.phone}
+        ✅ *الحالة الحالية:* محظور
+        👑 *الصلاحية:* ${role}
+        ━━━━━━━━━━━━━━━━
+        📞 *للتواصل مع الإدارة:* 01064211484
+        ━━━━━━━━━━━━━━━━`;
+                            break;
+
+                        case 'unblock':
+                            message = `✅ *إشعار إلغاء الحظر*
+
+        عزيزي ${username}،
+        تم إلغاء حظر حسابك في النظام.
+        يمكنك الآن الدخول إلى حسابك كالمعتاد.
+
+        ━━━━━━━━━━━━━━━━
+        📌 *بيانات حسابك:*
+        👤 *اسم المستخدم:* ${username}
+        📞 *رقم الهاتف:* ${user.phone}
+        ✅ *الحالة الحالية:* نشط
+        👑 *الصلاحية:* ${role}
+        ━━━━━━━━━━━━━━━━
+        📱 *رابط الدخول:*
+        ${siteUrl}
+
+        📞 للاستفسار: 01064211484
+        ━━━━━━━━━━━━━━━━`;
+                            break;
+
+                        case 'approve':
+                            message = `✅ *تم قبول طلب التسجيل*
+
+        عزيزي ${username}،
+        تمت الموافقة على طلب تسجيلك في النظام.
+
+        ━━━━━━━━━━━━━━━━
+        📌 *بيانات الدخول:*
+        👤 *اسم المستخدم:* ${username}
+        🔑 *كلمة المرور:* ${user.password}
+        📞 *رقم الهاتف:* ${user.phone}
+        ━━━━━━━━━━━━━━━━
+        ✅ *حالتك:* ${status}
+        👑 *الصلاحية:* ${role}
+        ━━━━━━━━━━━━━━━━
+        📱 *رابط الدخول:*
+        ${siteUrl}
+
+        📞 *للتواصل والاستفسار:* 01064211484
+        📍 *العنوان:* ٥ شارع المختار، ميامي، الإسكندرية
+        ━━━━━━━━━━━━━━━━
+        🌟 مرحباً بك في فريقنا`;
+                            break;
+
+                        case 'login':
+                            message = `🔓 *تم تسجيل الدخول إلى حسابك*
+
+        عزيزي ${username}،
+        تم تسجيل دخولك إلى النظام بنجاح.
+
+        ━━━━━━━━━━━━━━━━
+        📌 *معلومات الجلسة:*
+        👤 *المستخدم:* ${username}
+        📞 *رقم الهاتف:* ${user.phone}
+        ⏰ *وقت الدخول:* ${new Date().toLocaleString('ar-EG')}
+        ✅ *الحالة:* متصل حالياً
+        ━━━━━━━━━━━━━━━━
+        📱 *رابط الدخول:*
+        ${siteUrl}
+
+        📞 للاستفسار: 01064211484
+        ━━━━━━━━━━━━━━━━`;
+                            break;
+
+                        case 'logout':
+                            message = `🔒 *تم تسجيل الخروج من حسابك*
+
+        عزيزي ${username}،
+        تم تسجيل خروجك من النظام بنجاح.
+
+        ━━━━━━━━━━━━━━━━
+        📌 *معلومات الجلسة:*
+        👤 *المستخدم:* ${username}
+        📞 *رقم الهاتف:* ${user.phone}
+        ⏰ *وقت الخروج:* ${new Date().toLocaleString('ar-EG')}
+        📅 *آخر دخول:* ${lastLogin}
+        ✅ *الحالة:* غير متصل
+        ━━━━━━━━━━━━━━━━
+        📱 *رابط الدخول:*
+        ${siteUrl}
+
+        📞 للاستفسار: 01064211484
+        ━━━━━━━━━━━━━━━━
+        🌟 نتمنى لك يوماً سعيداً`;
+                            break;
+
+                        case 'reminder':
+                            message = `⏰ *تذكير*
+
+        عزيزي ${username}،
+        نذكرك بتسجيل الدخول إلى النظام ومتابعة مهامك.
+
+        ━━━━━━━━━━━━━━━━
+        📌 *بيانات حسابك:*
+        👤 *اسم المستخدم:* ${username}
+        📞 *رقم الهاتف:* ${user.phone}
+        📅 *آخر دخول:* ${lastLogin}
+        ✅ *الحالة:* ${status}
+        ━━━━━━━━━━━━━━━━
+        📱 *رابط الدخول:*
+        ${siteUrl}
+
+        📞 للاستفسار: 01064211484
+        ━━━━━━━━━━━━━━━━`;
+                            break;
+
+                        default:
+                            message = `📝 *رسالة من النظام*
+
+        عزيزي ${username}،
+
+        [اكتب رسالتك هنا...]
+
+        ━━━━━━━━━━━━━━━━
+        📌 *بيانات حسابك:*
+        👤 *اسم المستخدم:* ${username}
+        📞 *رقم الهاتف:* ${user.phone}
+        ✅ *الحالة:* ${status}
+        👑 *الصلاحية:* ${role}
+        ━━━━━━━━━━━━━━━━
+        📱 *رابط الدخول:*
+        ${siteUrl}
+
+        📞 للاستفسار: 01064211484
+        ━━━━━━━━━━━━━━━━`;
+                            break;
+                    }
+
+                    document.getElementById('singleMessageText').value = message;
+                }
+
+                // نسخ الرسالة الفردية
+                function copySingleMessage() {
+                    const message = document.getElementById('singleMessageText').value;
+
+                    navigator.clipboard.writeText(message).then(() => {
+                        alert('✅ تم نسخ الرسالة! يمكنك لصقها في واتساب الآن');
+                    }).catch(err => {
+                        alert('❌ فشل في النسخ: ' + err.message);
+                    });
+                }
+
+                // فتح واتساب للرسالة الفردية
+                function openSingleWhatsAppChat() {
+                    const message = document.getElementById('singleMessageText').value;
+                    let phone = selectedUserPhone;
+
+                    phone = phone.replace(/[^0-9]/g, '');
+                    if (phone.startsWith('0')) {
+                        phone = '20' + phone.substring(1);
+                    }
+
+                    const url = `https://wa.me/${phone}?text=${encodeURIComponent(message)}`;
+                    window.open(url, '_blank');
+                }
+    </script>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

@@ -1,0 +1,52 @@
+﻿@model IEnumerable<MobileShopSystem.Models.Device>
+@{
+    ViewData["Title"] = "تقارير الأجهزة";
+}
+
+<h2>تقارير الأجهزة</h2>
+
+<form method="get" asp-action="Reports">
+    <input type="text" name="search" placeholder="بحث باسم الجهاز أو السيريال" />
+    <button type="submit">بحث</button>
+</form>
+
+@if (TempData["Message"] != null)
+{
+    <div style="color:green;">@TempData["Message"]</div>
+}
+
+<table border="1" cellpadding="5">
+    <thead>
+        <tr>
+            <th>اسم الجهاز</th>
+            <th>السيريال</th>
+            <th>الرام</th>
+            <th>سعة التخزين</th>
+            <th>الحالة</th>
+            <th>الإجراءات</th>
+        </tr>
+    </thead>
+    <tbody>
+        @foreach (var d in Model)
+        {
+            <tr>
+                <td>@d.Name</td>
+                <td>@d.Serial</td>
+                <td>@d.RAM</td>
+                <td>@d.Storage</td>
+                <td>@d.Status</td>
+                <td>
+                    <a asp-action="Details" asp-route-id="@d.Id">تفاصيل</a> |
+                    <a asp-action="Edit" asp-route-id="@d.Id">تعديل</a> |
+                    <form asp-action="Delete" asp-route-id="@d.Id" method="post" style="display:inline;">
+                        <button type="submit" onclick="return confirm('هل تريد الحذف المؤقت؟')">حذف</button>
+                    </form> |
+                    <form asp-action="HardDelete" asp-route-id="@d.Id" method="post" style="display:inline;">
+                        <button type="submit" onclick="return confirm('هل تريد الحذف النهائي؟')">حذف نهائي</button>
+                    </form> |
+                    <a asp-action="Print" asp-route-id="@d.Id" target="_blank">طباعة</a>
+                </td>
+            </tr>
+        }
+    </tbody>
+</table>

@@ -1,0 +1,53 @@
+﻿@model MobileShopSystem.Models.Device
+@{
+    ViewData["Title"] = "إضافة جهاز جديد";
+}
+
+<h2>إضافة جهاز جديد</h2>
+
+<form asp-action="Create" method="post">
+    <div>
+        <label>اسم الجهاز</label>
+        <input asp-for="Name" />
+    </div>
+    <div>
+        <label>Serial</label>
+        <input asp-for="Serial" />
+    </div>
+    <div>
+        <label>سعة التخزين</label>
+        <input asp-for="Storage" />
+    </div>
+    <div>
+        <label>الرام</label>
+        <input asp-for="RAM" />
+    </div>
+    <div>
+        <label>سعر الشراء</label>
+        <input asp-for="PurchasePrice" />
+    </div>
+    <div>
+        <label>سعر البيع</label>
+        <input asp-for="SalePrice" />
+    </div>
+    <div>
+        <label>نوع المالك</label>
+        <select asp-for="OwnerType">
+            <option value="Shop">محل</option>
+            <option value="Person">شخص</option>
+        </select>
+    </div>
+    <div>
+        <label>اسم المالك</label>
+        <input asp-for="OwnerName" />
+    </div>
+    <div>
+        <label>رقم الهاتف</label>
+        <input asp-for="OwnerPhone" />
+    </div>
+    <div>
+        <label>رقم البطاقة</label>
+        <input asp-for="OwnerID" />
+    </div>
+    <button type="submit">حفظ</button>
+</form>

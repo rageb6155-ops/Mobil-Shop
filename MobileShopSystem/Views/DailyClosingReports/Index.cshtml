@@ -1,0 +1,38 @@
+﻿@model IEnumerable<MobileShopSystem.Models.DailyClosing>
+
+<h2>تقارير تقفيل الحساب</h2>
+
+<form method="get" asp-action="Reports">
+    <label>بحث بتاريخ: </label>
+    <input type="date" name="filterDate" />
+    <button type="submit">بحث</button>
+</form>
+
+<table border="1" cellpadding="5" cellspacing="0" style="width:100%; margin-top:10px;">
+    <thead>
+        <tr>
+            <th>تاريخ</th>
+            <th>المستخدم</th>
+            <th>الفلوس المتبقية</th>
+            <th>الفضة</th>
+            <th>الماكينات</th>
+        </tr>
+    </thead>
+    <tbody>
+        @foreach (var closing in Model)
+        {
+            <tr>
+                <td>@closing.ClosingDate.ToString("yyyy-MM-dd HH:mm")</td>
+                <td>@closing.CreatedBy</td>
+                <td>@closing.CashLeft</td>
+                <td>@closing.CoinsAmount</td>
+                <td>
+                    @foreach (var machine in closing.Machines)
+                    {
+                        <div>@machine.MachineName : @machine.Balance</div>
+                    }
+                </td>
+            </tr>
+        }
+    </tbody>
+</table>

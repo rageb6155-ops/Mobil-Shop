@@ -1,0 +1,61 @@
+﻿@model List<MobileShopSystem.Models.User>
+
+<h2>إدارة المستخدمين</h2>
+
+<table class="table table-bordered table-striped">
+
+    <thead>
+        <tr>
+            <th>اسم المستخدم</th>
+            <th>الهاتف</th>
+            <th>تاريخ الإنشاء</th>
+            <th>الحالة</th>
+            <th>الإجراءات</th>
+        </tr>
+    </thead>
+
+    <tbody>
+        @foreach (var user in Model)
+        {
+            <tr>
+
+                <td>@user.Username</td>
+                <td>@user.Phone</td>
+                <td>@user.CreatedDate</td>
+
+                <td>
+                    @if (!user.IsApproved)
+                    {
+                        <span class="badge bg-warning">بانتظار</span>
+                    }
+                    else if (user.IsBlocked)
+                    {
+                        <span class="badge bg-danger">محظور</span>
+                    }
+                    else
+                    {
+                        <span class="badge bg-success">نشط</span>
+                    }
+                </td>
+
+                <td>
+
+                    <a class="btn btn-success btn-sm"
+                       href="/Admin/Approve/@user.Id">موافقة</a>
+
+                    <a class="btn btn-danger btn-sm"
+                       href="/Admin/Block/@user.Id">حظر</a>
+
+                    <a class="btn btn-secondary btn-sm"
+                       href="/Admin/Unblock/@user.Id">فك الحظر</a>
+
+                    <a class="btn btn-dark btn-sm"
+                       href="/Admin/Delete/@user.Id">حذف</a>
+
+                </td>
+
+            </tr>
+        }
+    </tbody>
+
+</table>

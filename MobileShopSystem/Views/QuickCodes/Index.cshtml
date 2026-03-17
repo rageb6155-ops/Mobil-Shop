@@ -1,0 +1,516 @@
+﻿@{
+    ViewData["Title"] = "الأكواد السريعة";
+    var username = Context.Session.GetString("Username");
+}
+
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>@ViewData["Title"]</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" />
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, sans-serif;
+            background: #f4f6f9;
+            margin: 0;
+            padding: 20px;
+        }
+
+        .page-wrapper {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        /* بطاقة العنوان */
+        .header-card {
+            background: white;
+            border-radius: 16px;
+            padding: 20px 25px;
+            margin-bottom: 25px;
+            box-shadow: 0 5px 20px rgba(0,0,0,0.05);
+            border: 1px solid #f0f0f0;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 15px;
+        }
+
+        .header-title h1 {
+            margin: 0;
+            font-size: 26px;
+            font-weight: 600;
+            color: #6f42c1;
+        }
+
+        .header-title p {
+            margin: 5px 0 0;
+            color: #6c757d;
+            font-size: 14px;
+        }
+
+        .user-info {
+            background: #f8f9fa;
+            color: #6f42c1;
+            padding: 8px 20px;
+            border-radius: 50px;
+            font-size: 14px;
+            font-weight: 500;
+            border: 1px solid #e9ecef;
+        }
+
+        /* بطاقة الإضافة */
+        .add-card {
+            background: white;
+            border-radius: 16px;
+            padding: 25px;
+            box-shadow: 0 5px 20px rgba(0,0,0,0.05);
+            border: 1px solid #f0f0f0;
+            margin-bottom: 25px;
+        }
+
+        .add-title {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 20px;
+            color: #6f42c1;
+            font-weight: 600;
+            font-size: 20px;
+            padding-bottom: 10px;
+            border-bottom: 2px solid #f0f0f0;
+        }
+
+        .form-control {
+            padding: 12px 15px;
+            border: 2px solid #e9ecef;
+            border-radius: 8px;
+            font-size: 14px;
+            transition: all 0.3s;
+            width: 100%;
+        }
+
+            .form-control:focus {
+                outline: none;
+                border-color: #6f42c1;
+                box-shadow: 0 5px 20px rgba(111, 66, 193, 0.1);
+            }
+
+        .btn {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 8px;
+            font-size: 14px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.3s;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .btn-primary {
+            background: #6f42c1;
+            color: white;
+        }
+
+            .btn-primary:hover {
+                background: #5e35b1;
+                transform: translateY(-2px);
+            }
+
+        .btn-warning {
+            background: #ffc107;
+            color: #333;
+        }
+
+        .btn-danger {
+            background: #dc3545;
+            color: white;
+        }
+
+        .btn-secondary {
+            background: #6c757d;
+            color: white;
+        }
+
+        /* بطاقة البحث */
+        .search-card {
+            background: white;
+            border-radius: 16px;
+            padding: 20px 25px;
+            margin-bottom: 25px;
+            box-shadow: 0 5px 20px rgba(0,0,0,0.05);
+            border: 1px solid #f0f0f0;
+        }
+
+        .search-label {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 15px;
+            color: #333;
+            font-weight: 500;
+        }
+
+            .search-label i {
+                color: #6f42c1;
+            }
+
+        /* بطاقة الجدول */
+        .table-card {
+            background: white;
+            border-radius: 16px;
+            padding: 25px;
+            box-shadow: 0 5px 20px rgba(0,0,0,0.05);
+            border: 1px solid #f0f0f0;
+        }
+
+        .table-title {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 20px;
+            color: #6f42c1;
+            font-weight: 600;
+            font-size: 20px;
+        }
+
+        .table-responsive {
+            overflow-x: auto;
+        }
+
+        .codes-table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+            .codes-table th {
+                background: #f8f9fa;
+                color: #6f42c1;
+                padding: 12px;
+                font-weight: 600;
+                text-align: center;
+                border: 1px solid #e9ecef;
+            }
+
+            .codes-table td {
+                padding: 12px;
+                text-align: center;
+                border-bottom: 1px solid #e9ecef;
+            }
+
+            .codes-table tbody tr:hover {
+                background: #f8f9fa;
+            }
+
+        .no-results {
+            text-align: center;
+            padding: 60px 20px;
+            color: #6c757d;
+        }
+
+            .no-results i {
+                font-size: 60px;
+                margin-bottom: 15px;
+            }
+
+        /* حالة التعديل */
+        .editing {
+            background: #fff3cd !important;
+            border: 2px solid #ffc107;
+        }
+
+        .alert {
+            padding: 15px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .alert-success {
+            background: #d4edda;
+            color: #155724;
+            border-right: 3px solid #28a745;
+        }
+
+        .alert-danger {
+            background: #f8d7da;
+            color: #721c24;
+            border-right: 3px solid #dc3545;
+        }
+    </style>
+</head>
+<body>
+    <div class="page-wrapper">
+        <!-- بطاقة العنوان -->
+        <div class="header-card">
+            <div class="header-title">
+                <h1>
+                    <i class="fas fa-bolt"></i> الأكواد السريعة
+                </h1>
+                <p>إدارة الأكواد المختصرة للعمليات</p>
+            </div>
+            <div class="user-info">
+                <i class="fas fa-user-circle"></i> @username
+            </div>
+        </div>
+
+        <!-- رسائل التنبيه -->
+        <div id="alertContainer"></div>
+
+        <!-- بطاقة الإضافة -->
+        <div class="add-card">
+            <div class="add-title">
+                <i class="fas fa-plus-circle"></i>
+                <span id="formTitle">إضافة كود جديد</span>
+            </div>
+            <form id="codeForm" onsubmit="return false;">
+                <input type="hidden" id="codeId" value="0" />
+                <div class="row mb-3">
+                    <div class="col-md-6">
+                        <input type="text" id="codeName" class="form-control" placeholder="اسم العملية" required />
+                    </div>
+                    <div class="col-md-6">
+                        <input type="text" id="codeValue" class="form-control" placeholder="الكود المختصر" required />
+                    </div>
+                </div>
+                <div style="display: flex; gap: 10px;">
+                    <button type="button" class="btn btn-primary" onclick="saveCode()">
+                        <i class="fas fa-save"></i> <span id="saveBtnText">حفظ</span>
+                    </button>
+                    <button type="button" class="btn btn-secondary" onclick="resetForm()">
+                        <i class="fas fa-undo"></i> تفريغ
+                    </button>
+                </div>
+            </form>
+        </div>
+
+        <!-- بطاقة البحث -->
+        <div class="search-card">
+            <div class="search-label">
+                <i class="fas fa-search"></i>
+                <span>ابحث عن كود</span>
+            </div>
+            <input type="text" id="searchInput" class="form-control" placeholder="ابحث باسم العملية أو الكود..." />
+        </div>
+
+        <!-- بطاقة الجدول -->
+        <div class="table-card">
+            <div class="table-title">
+                <i class="fas fa-list"></i>
+                <span>قائمة الأكواد</span>
+            </div>
+            <div class="table-responsive">
+                <table class="codes-table" id="codesTable">
+                    <thead>
+                        <tr>
+                            <th>#</th>
+                            <th>اسم العملية</th>
+                            <th>الكود المختصر</th>
+                            <th>أضيف بواسطة</th>
+                            <th>تاريخ الإضافة</th>
+                            <th>الإجراءات</th>
+                        </tr>
+                    </thead>
+                    <tbody id="codesBody">
+                        <tr class="no-results">
+                            <td colspan="6">
+                                <i class="fas fa-box-open"></i>
+                                <p>لا توجد أكواد</p>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let allCodes = [];
+        let editingId = 0;
+
+        // تحميل الأكواد عند فتح الصفحة
+        document.addEventListener('DOMContentLoaded', function() {
+            loadCodes();
+        });
+
+        // تحميل الأكواد
+        function loadCodes(search = '') {
+            var url = '/QuickCodes/GetAllCodes';
+            if (search) {
+                url += '?search=' + encodeURIComponent(search);
+            }
+
+            fetch(url)
+                .then(res => res.json())
+                .then(data => {
+                    if (data.success) {
+                        allCodes = data.codes;
+                        renderCodes(data.codes);
+                    }
+                });
+        }
+
+        // عرض الأكواد في الجدول
+        function renderCodes(codes) {
+            var tbody = document.getElementById('codesBody');
+            if (!codes || codes.length === 0) {
+                tbody.innerHTML = `
+                    <tr class="no-results">
+                        <td colspan="6">
+                            <i class="fas fa-box-open"></i>
+                            <p>لا توجد أكواد</p>
+                        </td>
+                    </tr>
+                `;
+                return;
+            }
+
+            tbody.innerHTML = '';
+            codes.forEach((code, index) => {
+                tbody.innerHTML += `
+                    <tr id="code-${code.id}">
+                        <td>${index + 1}</td>
+                        <td>${code.codeName}</td>
+                        <td><span class="badge bg-info">${code.codeValue}</span></td>
+                        <td>${code.userName}</td>
+                        <td>${new Date(code.createdAt).toLocaleString('ar-EG')}</td>
+                        <td>
+                            <button class="btn btn-warning" onclick="editCode(${code.id})">
+                                <i class="fas fa-edit"></i>
+                            </button>
+                            <button class="btn btn-danger" onclick="deleteCode(${code.id})">
+                                <i class="fas fa-trash"></i>
+                            </button>
+                        </td>
+                    </tr>
+                `;
+            });
+        }
+
+        // حفظ كود (إضافة أو تعديل)
+        function saveCode() {
+            var id = document.getElementById('codeId').value;
+            var name = document.getElementById('codeName').value.trim();
+            var value = document.getElementById('codeValue').value.trim();
+
+            if (!name || !value) {
+                showAlert('الرجاء إدخال جميع الحقول', 'danger');
+                return;
+            }
+
+            var url = id === '0' ? '/QuickCodes/AddCode' : '/QuickCodes/UpdateCode';
+            var method = 'POST';
+
+            fetch(url, {
+                method: method,
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ id: parseInt(id), codeName: name, codeValue: value })
+            })
+            .then(res => res.json())
+            .then(data => {
+                if (data.success) {
+                    showAlert(data.message, 'success');
+                    resetForm();
+                    loadCodes(document.getElementById('searchInput').value);
+                } else {
+                    showAlert(data.message, 'danger');
+                }
+            });
+        }
+
+        // تعديل كود
+        function editCode(id) {
+            var code = allCodes.find(c => c.id === id);
+            if (!code) return;
+
+            editingId = id;
+            document.getElementById('codeId').value = id;
+            document.getElementById('codeName').value = code.codeName;
+            document.getElementById('codeValue').value = code.codeValue;
+            document.getElementById('formTitle').innerText = 'تعديل كود';
+            document.getElementById('saveBtnText').innerText = 'تعديل';
+
+            // إزالة التحديد من الصفوف
+            document.querySelectorAll('.codes-table tbody tr').forEach(tr => {
+                tr.classList.remove('editing');
+            });
+            document.getElementById(`code-${id}`).classList.add('editing');
+        }
+
+        // حذف كود
+        function deleteCode(id) {
+            if (confirm('هل أنت متأكد من حذف هذا الكود؟')) {
+                if (confirm('تأكيد ثاني: سيتم حذف الكود نهائياً، هل تريد المتابعة؟')) {
+                    fetch('/QuickCodes/DeleteCode', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ id: id })
+                    })
+                    .then(res => res.json())
+                    .then(data => {
+                        if (data.success) {
+                            showAlert(data.message, 'success');
+                            if (editingId === id) {
+                                resetForm();
+                            }
+                            loadCodes(document.getElementById('searchInput').value);
+                        } else {
+                            showAlert(data.message, 'danger');
+                        }
+                    });
+                }
+            }
+        }
+
+        // تفريغ النموذج
+        function resetForm() {
+            editingId = 0;
+            document.getElementById('codeId').value = '0';
+            document.getElementById('codeName').value = '';
+            document.getElementById('codeValue').value = '';
+            document.getElementById('formTitle').innerText = 'إضافة كود جديد';
+            document.getElementById('saveBtnText').innerText = 'حفظ';
+
+            document.querySelectorAll('.codes-table tbody tr').forEach(tr => {
+                tr.classList.remove('editing');
+            });
+        }
+
+        // إظهار رسالة
+        function showAlert(message, type) {
+            var container = document.getElementById('alertContainer');
+            var alert = document.createElement('div');
+            alert.className = `alert alert-${type}`;
+            alert.innerHTML = `<i class="fas fa-${type === 'success' ? 'check-circle' : 'exclamation-circle'}"></i> ${message}`;
+            container.appendChild(alert);
+
+            setTimeout(() => {
+                alert.remove();
+            }, 3000);
+        }
+
+        // البحث
+        document.getElementById('searchInput').addEventListener('keyup', function() {
+            var search = this.value.trim();
+            if (search) {
+                var filtered = allCodes.filter(c =>
+                    c.codeName.includes(search) ||
+                    c.codeValue.includes(search)
+                );
+                renderCodes(filtered);
+            } else {
+                renderCodes(allCodes);
+            }
+        });
+    </script>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

@@ -1,0 +1,526 @@
+﻿@model MobileShopSystem.Models.DailyClosing
+
+@{
+    Layout = null;
+    var username = Context.Session.GetString("Username");
+}
+
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="utf-8" />
+    <title>فاتورة تقفيل حساب - @Model.ClosingDate.ToString("yyyy-MM-dd")</title>
+    <!-- إضافة مكتبة jsPDF -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <!-- إضافة مكتبة html2canvas لتصوير HTML -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Arial, sans-serif;
+            background: #f0f0f0;
+            margin: 0;
+            padding: 10px;
+            color: #333;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+        }
+
+        .invoice-container {
+            width: 80mm; /* 8 سم */
+            max-width: 80mm;
+            margin: 0 auto;
+            background: #fff;
+            border-radius: 8px;
+            padding: 8px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            font-size: 10px;
+            line-height: 1.3;
+            box-sizing: border-box;
+        }
+
+        /* رأس الفاتورة */
+        .invoice-header {
+            text-align: center;
+            border-bottom: 1px dashed #3498db;
+            padding-bottom: 8px;
+            margin-bottom: 8px;
+        }
+
+        .shop-name {
+            font-size: 16px;
+            font-weight: bold;
+            color: #2c3e50;
+            margin: 0;
+        }
+
+        .shop-details {
+            color: #7f8c8d;
+            font-size: 8px;
+            margin-top: 3px;
+        }
+
+        .invoice-title {
+            background: #3498db;
+            color: white;
+            padding: 4px;
+            font-size: 11px;
+            border-radius: 4px;
+            margin-top: 6px;
+            font-weight: bold;
+        }
+
+        /* معلومات الفاتورة */
+        .info-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 4px;
+            margin-bottom: 8px;
+        }
+
+        .info-item {
+            background: #f8f9fa;
+            padding: 4px;
+            border-radius: 4px;
+        }
+
+        .info-label {
+            font-size: 7px;
+            color: #7f8c8d;
+            display: block;
+        }
+
+        .info-value {
+            font-size: 9px;
+            font-weight: bold;
+            color: #2c3e50;
+            display: block;
+        }
+
+        /* جدول الماكينات */
+        .machines-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 8px 0;
+            font-size: 8px;
+        }
+
+            .machines-table th {
+                background: #34495e;
+                color: white;
+                padding: 4px;
+                font-size: 8px;
+            }
+
+            .machines-table td {
+                padding: 4px;
+                border-bottom: 1px solid #eee;
+                text-align: center;
+            }
+
+        /* إجمالي المبالغ */
+        .totals-box {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border-radius: 6px;
+            padding: 8px;
+            margin: 8px 0;
+        }
+
+        .total-row {
+            display: flex;
+            justify-content: space-between;
+            font-size: 9px;
+            margin-bottom: 4px;
+            padding: 3px 6px;
+            background: rgba(255,255,255,0.1);
+            border-radius: 4px;
+        }
+
+        .grand-total {
+            font-size: 12px;
+            font-weight: bold;
+            background: rgba(255,255,255,0.2);
+            border: 1px solid rgba(255,255,255,0.5);
+            margin-top: 4px;
+        }
+
+        /* إحصائيات سريعة */
+        .stats-mini {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 4px;
+            margin: 8px 0;
+        }
+
+        .stat-mini-item {
+            background: #f8f9fa;
+            padding: 4px;
+            border-radius: 4px;
+            text-align: center;
+            border-right: 2px solid #3498db;
+        }
+
+        .stat-mini-label {
+            font-size: 6px;
+            color: #7f8c8d;
+        }
+
+        .stat-mini-value {
+            font-size: 9px;
+            font-weight: bold;
+            color: #2c3e50;
+        }
+
+        /* ملخص سريع */
+        .summary-mini {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 4px;
+            margin: 8px 0;
+        }
+
+        .summary-item.cash {
+            background: #e8f5e8;
+            padding: 6px;
+            border-radius: 4px;
+            text-align: center;
+        }
+
+        .summary-item.machines {
+            background: #e3f2fd;
+            padding: 6px;
+            border-radius: 4px;
+            text-align: center;
+        }
+
+        .summary-label {
+            font-size: 7px;
+            color: #555;
+        }
+
+        .summary-value {
+            font-size: 10px;
+            font-weight: bold;
+        }
+
+        /* التوقيعات */
+        .signatures-mini {
+            display: flex;
+            justify-content: space-between;
+            margin: 8px 0;
+            padding: 6px;
+            border-top: 1px dashed #3498db;
+            border-bottom: 1px dashed #3498db;
+        }
+
+        .signature-mini-box {
+            text-align: center;
+            width: 45%;
+        }
+
+            .signature-mini-box div:first-child {
+                font-size: 8px;
+                font-weight: bold;
+                color: #2c3e50;
+                margin-bottom: 15px;
+            }
+
+            .signature-mini-box div:last-child {
+                color: #7f8c8d;
+                font-size: 6px;
+            }
+
+        /* ختم الفاتورة */
+        .stamp-mini {
+            text-align: center;
+            margin: 6px 0;
+            opacity: 0.2;
+            font-size: 25px;
+            transform: rotate(-15deg);
+            color: #27ae60;
+        }
+
+        /* الفوتر */
+        .footer-mini {
+            margin-top: 8px;
+            font-size: 6px;
+            color: #777;
+            text-align: center;
+            border-top: 1px solid #eee;
+            padding-top: 4px;
+        }
+
+        /* خط منقط */
+        .dashed-line {
+            border-top: 1px dashed #ccc;
+            margin: 6px 0;
+        }
+
+        /* زر التحميل */
+        .download-btn {
+            margin: 20px 0;
+            padding: 12px 30px;
+            background: #27ae60;
+            color: white;
+            border: none;
+            border-radius: 25px;
+            font-size: 16px;
+            font-weight: bold;
+            cursor: pointer;
+            box-shadow: 0 4px 15px rgba(39, 174, 96, 0.3);
+            transition: all 0.3s ease;
+            border: none;
+            outline: none;
+        }
+
+            .download-btn:hover {
+                background: #219a52;
+                transform: translateY(-2px);
+                box-shadow: 0 6px 20px rgba(39, 174, 96, 0.4);
+            }
+
+        /* رسالة التحميل */
+        .loading-message {
+            display: none;
+            margin: 10px 0;
+            padding: 10px;
+            background: #3498db;
+            color: white;
+            border-radius: 5px;
+            font-size: 14px;
+        }
+
+        @@media print {
+            .download-btn, .loading-message {
+                display: none;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- زر التحميل -->
+    <button class="download-btn" onclick="downloadPDF()">
+        📥 تحميل الفاتورة PDF
+    </button>
+
+    <!-- رسالة انتظار -->
+    <div id="loadingMessage" class="loading-message">
+        جاري تحضير الفاتورة...
+    </div>
+
+    <!-- الفاتورة نفسها -->
+    <div id="invoiceContent" class="invoice-container">
+
+        <!-- رأس الفاتورة -->
+        <div class="invoice-header">
+            <h1 class="shop-name">Mobile📱Shop</h1>
+            <div class="shop-details">
+                01064211484
+            </div>
+            <div class="invoice-title">
+                Daily Closing Invoice
+            </div>
+        </div>
+
+        <!-- معلومات الفاتورة -->
+        <div class="info-grid">
+            <div class="info-item">
+                <span class="info-label">رقم الفاتورة</span>
+                <span class="info-value">@Model.Id</span>
+            </div>
+            <div class="info-item">
+                <span class="info-label">التاريخ</span>
+                <span class="info-value">@Model.ClosingDate.ToString("dd/MM/yyyy")</span>
+            </div>
+            <div class="info-item">
+                <span class="info-label">الساعة</span>
+                <span class="info-value">@Model.ClosingDate.ToString("HH:mm")</span>
+            </div>
+            <div class="info-item">
+                <span class="info-label">تم التقفيل بواسطة</span>
+                <span class="info-value">@Model.CreatedBy</span>
+            </div>
+        </div>
+
+        <!-- الحالة -->
+        <div style="text-align: center; margin-bottom: 6px; font-size: 8px; font-weight: bold;">
+            @if (Model.IsDeleted)
+            {
+                <span style="color: red;">⚠️ محذوفة</span>
+            }
+            else if (Model.IsEdited)
+            {
+                <span style="color: orange;">✏️ معدلة</span>
+            }
+            else
+            {
+                <span style="color: green;">✓ سليمة</span>
+            }
+        </div>
+
+        <div class="dashed-line"></div>
+
+        @{
+            decimal totalMachinesBalance = Model.Machines.Sum(m => m.Balance);
+            decimal totalCash = Model.CashLeft + Model.CoinsAmount;
+            decimal grandTotal = totalMachinesBalance + totalCash;
+        }
+
+        <!-- إحصائيات سريعة -->
+        <div class="stats-mini">
+            <div class="stat-mini-item">
+                <div class="stat-mini-label">الماكينات</div>
+                <div class="stat-mini-value">@Model.Machines.Count</div>
+            </div>
+            <div class="stat-mini-item">
+                <div class="stat-mini-label">إجمالي الأرصدة</div>
+                <div class="stat-mini-value">@totalMachinesBalance.ToString("N0")</div>
+            </div>
+            <div class="stat-mini-item">
+                <div class="stat-mini-label">إجمالي النقدي</div>
+                <div class="stat-mini-value">@totalCash.ToString("N0")</div>
+            </div>
+        </div>
+
+        <!-- جدول الماكينات -->
+        <table class="machines-table">
+            <thead>
+                <tr>
+                    <th>#</th>
+                    <th>الماكينة</th>
+                    <th>الرصيد</th>
+                </tr>
+            </thead>
+            <tbody>
+                @{
+                    int counter = 1;
+                    foreach (var machine in Model.Machines)
+                    {
+                        <tr>
+                            <td>@counter</td>
+                            <td style="text-align: right;">@machine.MachineName</td>
+                            <td style="color: #27ae60;">@machine.Balance.ToString("N0")</td>
+                        </tr>
+                        counter++;
+                    }
+                }
+            </tbody>
+        </table>
+
+        <div class="dashed-line"></div>
+
+        <!-- المبالغ النقدية -->
+        <div style="margin: 6px 0;">
+            <div style="display: flex; justify-content: space-between; font-size: 8px; padding: 2px 0;">
+                <span>💰 إجمالي الماكينات:</span>
+                <span style="font-weight: bold;">@totalMachinesBalance.ToString("N2")</span>
+            </div>
+            <div style="display: flex; justify-content: space-between; font-size: 8px; padding: 2px 0;">
+                <span>💵 الفلوس:</span>
+                <span style="font-weight: bold;">@Model.CashLeft.ToString("N2")</span>
+            </div>
+            <div style="display: flex; justify-content: space-between; font-size: 8px; padding: 2px 0;">
+                <span>🪙 الفضة:</span>
+                <span style="font-weight: bold;">@Model.CoinsAmount.ToString("N2")</span>
+            </div>
+        </div>
+
+        <!-- الإجمالي الكلي -->
+        <div class="totals-box">
+            <div class="total-row grand-total">
+                <span>✨ الإجمالي الكلي</span>
+                <span>@grandTotal.ToString("N2")</span>
+            </div>
+        </div>
+
+        <!-- ملخص سريع -->
+        <div class="summary-mini">
+            <div class="summary-item cash">
+                <div class="summary-label">نقدي</div>
+                <div class="summary-value" style="color: #27ae60;">@totalCash.ToString("N0")</div>
+            </div>
+            <div class="summary-item machines">
+                <div class="summary-label">ماكينات</div>
+                <div class="summary-value" style="color: #1976d2;">@totalMachinesBalance.ToString("N0")</div>
+            </div>
+        </div>
+
+        <!-- ختم الفاتورة -->
+        @if (!Model.IsDeleted && !Model.IsEdited)
+        {
+            <div class="stamp-mini">Mobile📱Shop</div>
+        }
+
+        <!-- الفوتر -->
+        <div class="footer-mini">
+            <div>Mobile📱Shop - @DateTime.Now.ToString("dd/MM/yyyy HH:mm")</div>
+            <div>شكراً لتعاملكم معنا ✨</div>
+        </div>
+    </div>
+
+    <script>
+        async function downloadPDF() {
+            try {
+                // إظهار رسالة التحميل
+                document.getElementById('loadingMessage').style.display = 'block';
+
+                // الحصول على عنصر الفاتورة
+                const element = document.getElementById('invoiceContent');
+
+                // تصوير العنصر
+                const canvas = await html2canvas(element, {
+                    scale: 2,
+                    backgroundColor: '#ffffff',
+                    logging: false,
+                    allowTaint: true,
+                    useCORS: true
+                });
+
+                // الحصول على jsPDF
+                const { jsPDF } = window.jspdf;
+
+                // 8 سم = 80 مم
+                const widthInMm = 80;
+
+                // حساب الارتفاع المناسب
+                const imgWidth = widthInMm;
+                const imgHeight = (canvas.height * imgWidth) / canvas.width;
+
+                // إنشاء PDF بالمقاس المناسب
+                const pdf = new jsPDF({
+                    orientation: 'portrait',
+                    unit: 'mm',
+                    format: [imgWidth, imgHeight]
+                });
+
+                // إضافة الصورة
+                const imgData = canvas.toDataURL('image/png');
+                pdf.addImage(imgData, 'PNG', 0, 0, imgWidth, imgHeight, undefined, 'FAST');
+
+                // اسم الملف
+                const fileName = 'فاتورة_تقفيل_حساب_' + '@Model.ClosingDate.ToString("yyyy-MM-dd")' + '.pdf';
+
+                // تحميل الملف
+                pdf.save(fileName);
+
+                // إخفاء رسالة التحميل
+                document.getElementById('loadingMessage').style.display = 'none';
+
+            } catch (error) {
+                console.error('خطأ في تحميل PDF:', error);
+                alert('حدث خطأ في تحميل الفاتورة: ' + error.message);
+                document.getElementById('loadingMessage').style.display = 'none';
+            }
+        }
+
+        // تشغيل PDF تلقائي عند فتح الصفحة
+        window.onload = function() {
+            setTimeout(downloadPDF, 500);
+        };
+    </script>
+</body>
+</html>

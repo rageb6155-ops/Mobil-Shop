@@ -1,0 +1,293 @@
+﻿@model MobileShopSystem.Models.User
+
+@{
+    ViewData["Title"] = "تفاصيل المستخدم";
+}
+
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>@ViewData["Title"]</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" />
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, sans-serif;
+            background: #f4f6f9;
+            margin: 0;
+            padding: 20px;
+        }
+
+        .page-wrapper {
+            max-width: 600px;
+            margin: 0 auto;
+        }
+
+        /* بطاقة العنوان */
+        .header-card {
+            background: white;
+            border-radius: 16px;
+            padding: 20px 25px;
+            margin-bottom: 25px;
+            box-shadow: 0 5px 20px rgba(0,0,0,0.05);
+            border: 1px solid #f0f0f0;
+        }
+
+        .header-title h1 {
+            margin: 0;
+            font-size: 24px;
+            font-weight: 600;
+            color: #9b59b6;
+            text-align: center;
+        }
+
+        .header-title p {
+            margin: 5px 0 0;
+            color: #6c757d;
+            font-size: 14px;
+            text-align: center;
+        }
+
+        /* بطاقة التفاصيل */
+        .details-card {
+            background: white;
+            border-radius: 16px;
+            padding: 25px;
+            box-shadow: 0 5px 20px rgba(0,0,0,0.05);
+            border: 1px solid #f0f0f0;
+        }
+
+        /* صورة المستخدم */
+        .user-avatar {
+            width: 80px;
+            height: 80px;
+            background: linear-gradient(135deg, #9b59b6, #8e44ad);
+            border-radius: 50%;
+            margin: 0 auto 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 40px;
+            box-shadow: 0 5px 15px rgba(155, 89, 182, 0.3);
+        }
+
+        /* حقل المعلومات */
+        .info-item {
+            background: #f8f9fa;
+            border-radius: 10px;
+            padding: 15px;
+            margin-bottom: 15px;
+            border-right: 3px solid #9b59b6;
+        }
+
+        .info-label {
+            font-size: 12px;
+            color: #6c757d;
+            margin-bottom: 5px;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+
+            .info-label i {
+                color: #9b59b6;
+                width: 20px;
+            }
+
+        .info-value {
+            font-size: 16px;
+            font-weight: 500;
+            color: #333;
+            padding-right: 25px;
+        }
+
+        /* الحالات */
+        .status-badge {
+            display: inline-block;
+            padding: 5px 15px;
+            border-radius: 50px;
+            font-size: 13px;
+            font-weight: 500;
+        }
+
+        .status-admin {
+            background: #9b59b6;
+            color: white;
+        }
+
+        .status-user {
+            background: #3498db;
+            color: white;
+        }
+
+        .status-online {
+            background: #d4edda;
+            color: #155724;
+        }
+
+        .status-offline {
+            background: #e2e3e5;
+            color: #383d41;
+        }
+
+        /* زر الرجوع */
+        .btn-back {
+            background: linear-gradient(135deg, #9b59b6, #8e44ad);
+            color: white;
+            text-decoration: none;
+            padding: 12px 25px;
+            border-radius: 8px;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            margin-top: 20px;
+            transition: all 0.3s;
+            border: none;
+            font-size: 14px;
+            font-weight: 500;
+            width: 100%;
+            justify-content: center;
+        }
+
+            .btn-back:hover {
+                transform: translateY(-2px);
+                box-shadow: 0 5px 15px rgba(155, 89, 182, 0.3);
+            }
+
+        /* تنسيقات إضافية */
+        .password-value {
+            font-family: monospace;
+            letter-spacing: 2px;
+        }
+
+        .divider {
+            height: 1px;
+            background: linear-gradient(to right, transparent, #9b59b6, transparent);
+            margin: 20px 0;
+        }
+    </style>
+</head>
+<body>
+    <div class="page-wrapper">
+        <!-- بطاقة العنوان -->
+        <div class="header-card">
+            <div class="header-title">
+                <h1>
+                    <i class="fas fa-user-circle"></i> تفاصيل المستخدم
+                </h1>
+                <p>عرض كامل لبيانات المستخدم</p>
+            </div>
+        </div>
+
+        <!-- بطاقة التفاصيل -->
+        <div class="details-card">
+            <!-- صورة المستخدم -->
+            <div class="user-avatar">
+                <i class="fas fa-user"></i>
+            </div>
+
+            <!-- اسم المستخدم -->
+            <div class="info-item">
+                <div class="info-label">
+                    <i class="fas fa-user-tag"></i> اسم المستخدم
+                </div>
+                <div class="info-value">@Model.Username</div>
+            </div>
+
+            <!-- رقم الهاتف -->
+            <div class="info-item">
+                <div class="info-label">
+                    <i class="fas fa-phone"></i> رقم الهاتف
+                </div>
+                <div class="info-value">@Model.Phone</div>
+            </div>
+
+            <!-- كلمة السر -->
+            <div class="info-item">
+                <div class="info-label">
+                    <i class="fas fa-lock"></i> كلمة السر
+                </div>
+                <div class="info-value password-value">@Model.Password</div>
+            </div>
+
+            <!-- الصلاحية -->
+            <div class="info-item">
+                <div class="info-label">
+                    <i class="fas fa-shield-alt"></i> الصلاحية
+                </div>
+                <div class="info-value">
+                    @if (Model.IsAdmin)
+                    {
+                        <span class="status-badge status-admin">أدمن</span>
+                    }
+                    else
+                    {
+                        <span class="status-badge status-user">مستخدم</span>
+                    }
+                </div>
+            </div>
+
+            <!-- الحالة -->
+            <div class="info-item">
+                <div class="info-label">
+                    <i class="fas fa-circle"></i> الحالة
+                </div>
+                <div class="info-value">
+                    @if (Model.IsOnline)
+                    {
+                        <span class="status-badge status-online">متصل</span>
+                    }
+                    else
+                    {
+                        <span class="status-badge status-offline">غير متصل</span>
+                    }
+                </div>
+            </div>
+
+            <!-- آخر تسجيل دخول -->
+            <div class="info-item">
+                <div class="info-label">
+                    <i class="fas fa-sign-in-alt"></i> آخر تسجيل دخول
+                </div>
+                <div class="info-value">
+                    @if (Model.LastLogin.HasValue)
+                    {
+                        @Model.LastLogin?.ToString("yyyy-MM-dd HH:mm")
+                    }
+                    else
+                    {
+                        <span style="color: #999;">لم يسجل دخول بعد</span>
+                    }
+                </div>
+            </div>
+
+            <!-- آخر تسجيل خروج -->
+            <div class="info-item">
+                <div class="info-label">
+                    <i class="fas fa-sign-out-alt"></i> آخر تسجيل خروج
+                </div>
+                <div class="info-value">
+                    @if (Model.LastLogout.HasValue)
+                    {
+                        @Model.LastLogout?.ToString("yyyy-MM-dd HH:mm")
+                    }
+                    else
+                    {
+                        <span style="color: #999;">لم يسجل خروج بعد</span>
+                    }
+                </div>
+            </div>
+
+            <!-- خط فاصل -->
+            <div class="divider"></div>
+
+            <!-- زر الرجوع -->
+            <a asp-action="Index" class="btn-back">
+                <i class="fas fa-arrow-right"></i> رجوع إلى القائمة
+            </a>
+        </div>
+    </div>
+</body>
+</html>

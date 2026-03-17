@@ -1,0 +1,703 @@
+﻿@model List<MobileShopSystem.Controllers.ProductViewModel>
+
+@{
+    ViewData["Title"] = "عرض المنتجات";
+    var username = Context.Session.GetString("Username");
+}
+
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>@ViewData["Title"]</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" />
+    <!-- إضافة مكتبات PDF -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, sans-serif;
+            background: #ffffff;
+            margin: 0;
+            padding: 20px;
+            color: #333;
+        }
+
+        .page-wrapper {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        /* بطاقة العنوان */
+        .header-card {
+            background: white;
+            border-radius: 16px;
+            padding: 20px 25px;
+            margin-bottom: 25px;
+            box-shadow: 0 5px 20px rgba(0,0,0,0.05);
+            border: 1px solid #f0f0f0;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 15px;
+        }
+
+        .header-title h1 {
+            margin: 0;
+            font-size: 26px;
+            font-weight: 600;
+            color: #4361ee;
+        }
+
+        .header-title p {
+            margin: 5px 0 0;
+            color: #6c757d;
+            font-size: 14px;
+        }
+
+        .user-info {
+            background: #f8f9fa;
+            color: #4361ee;
+            padding: 8px 20px;
+            border-radius: 50px;
+            font-size: 14px;
+            font-weight: 500;
+            border: 1px solid #e9ecef;
+        }
+
+            .user-info i {
+                margin-left: 8px;
+            }
+
+        /* بطاقة البحث */
+        .search-card {
+            background: white;
+            border-radius: 16px;
+            padding: 20px 25px;
+            margin-bottom: 25px;
+            box-shadow: 0 5px 20px rgba(0,0,0,0.05);
+            border: 1px solid #f0f0f0;
+        }
+
+        .search-label {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 15px;
+            color: #333;
+            font-weight: 500;
+        }
+
+            .search-label i {
+                color: #4361ee;
+                font-size: 20px;
+            }
+
+        .search-wrapper {
+            position: relative;
+            display: flex;
+            align-items: center;
+        }
+
+        .search-icon {
+            position: absolute;
+            right: 15px;
+            color: #adb5bd;
+            font-size: 18px;
+        }
+
+        .clear-search {
+            position: absolute;
+            left: 15px;
+            color: #adb5bd;
+            cursor: pointer;
+            font-size: 18px;
+            transition: color 0.3s;
+            display: none;
+        }
+
+            .clear-search:hover {
+                color: #dc3545;
+            }
+
+        .search-input {
+            width: 100%;
+            padding: 12px 50px;
+            border: 2px solid #e9ecef;
+            border-radius: 50px;
+            font-size: 15px;
+            transition: all 0.3s;
+            background: #f8f9fa;
+        }
+
+            .search-input:focus {
+                outline: none;
+                border-color: #4361ee;
+                background: white;
+                box-shadow: 0 5px 20px rgba(67, 97, 238, 0.1);
+            }
+
+                .search-input:focus + .clear-search {
+                    display: block;
+                }
+
+        .search-stats {
+            margin-top: 10px;
+            font-size: 13px;
+            color: #6c757d;
+            text-align: left;
+        }
+
+        /* بطاقة الجدول */
+        .table-card {
+            background: white;
+            border-radius: 16px;
+            padding: 20px 25px;
+            box-shadow: 0 5px 20px rgba(0,0,0,0.05);
+            border: 1px solid #f0f0f0;
+        }
+
+        .table-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+            gap: 15px;
+        }
+
+        .table-title {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+            .table-title i {
+                color: #4361ee;
+                font-size: 24px;
+            }
+
+            .table-title h3 {
+                margin: 0;
+                color: #333;
+                font-weight: 600;
+            }
+
+        .badge-count {
+            background: #4361ee;
+            color: white;
+            padding: 5px 15px;
+            border-radius: 50px;
+            font-size: 14px;
+            font-weight: 500;
+        }
+
+        /* الجدول */
+        .table-responsive {
+            overflow-x: auto;
+            border-radius: 12px;
+        }
+
+        .product-table {
+            width: 100%;
+            border-collapse: collapse;
+            background: white;
+        }
+
+            .product-table th {
+                background: #4361ee;
+                color: white;
+                padding: 12px;
+                font-weight: 500;
+                font-size: 14px;
+                text-align: center;
+                white-space: nowrap;
+            }
+
+            .product-table td {
+                padding: 12px;
+                border-bottom: 1px solid #e9ecef;
+                text-align: center;
+                color: #333;
+                font-size: 14px;
+            }
+
+            .product-table tbody tr {
+                transition: all 0.3s;
+                cursor: pointer;
+            }
+
+                .product-table tbody tr:hover {
+                    background: #f0f4ff;
+                    transform: scale(1.01);
+                    box-shadow: 0 5px 15px rgba(67, 97, 238, 0.1);
+                }
+
+                .product-table tbody tr.selected {
+                    background: #e8f0fe;
+                    border: 2px solid #4361ee;
+                }
+
+        /* خلايا مخصصة */
+        .product-name {
+            font-weight: 600;
+            color: #4361ee;
+        }
+
+        .product-code {
+            background: #e9ecef;
+            padding: 4px 10px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 600;
+            color: #333;
+        }
+
+        .product-serial {
+            font-family: 'Courier New', monospace;
+            background: #f8f9fa;
+            padding: 4px 10px;
+            border-radius: 20px;
+            font-size: 12px;
+        }
+
+        .product-price {
+            font-weight: 700;
+            color: #28a745;
+            font-size: 16px;
+        }
+
+        .price-currency {
+            font-size: 12px;
+            color: #6c757d;
+            margin-right: 2px;
+        }
+
+        /* رسالة عدم وجود نتائج */
+        .no-results {
+            text-align: center;
+            padding: 60px 20px;
+            background: #f8f9fa;
+            border-radius: 12px;
+            margin: 20px 0;
+        }
+
+            .no-results i {
+                font-size: 60px;
+                color: #dee2e6;
+                margin-bottom: 20px;
+            }
+
+            .no-results h4 {
+                color: #333;
+                margin-bottom: 10px;
+            }
+
+            .no-results p {
+                color: #6c757d;
+                margin: 0;
+            }
+
+        /* أزرار التحميل والطباعة */
+        .action-buttons {
+            display: flex;
+            gap: 10px;
+        }
+
+        .btn-action {
+            padding: 8px 15px;
+            border: none;
+            border-radius: 8px;
+            font-size: 13px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.3s;
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+            color: white;
+        }
+
+        .btn-excel {
+            background: #28a745;
+        }
+
+            .btn-excel:hover {
+                background: #218838;
+                transform: translateY(-2px);
+            }
+
+        .btn-pdf {
+            background: #4361ee;
+        }
+
+            .btn-pdf:hover {
+                background: #3f37c9;
+                transform: translateY(-2px);
+            }
+
+            .btn-excel:disabled, .btn-pdf:disabled {
+                opacity: 0.5;
+                cursor: not-allowed;
+                transform: none;
+            }
+
+        /* رسالة تحديد منتج */
+        .selection-message {
+            background: #fff3cd;
+            color: #856404;
+            padding: 10px 15px;
+            border-radius: 8px;
+            font-size: 13px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+            .selection-message i {
+                font-size: 16px;
+            }
+    </style>
+</head>
+<body>
+    <div class="page-wrapper">
+
+        <!-- بطاقة العنوان -->
+        <div class="header-card">
+            <div class="header-title">
+                <h1>
+                    <i class="fas fa-box"></i> عرض المنتجات
+                </h1>
+                <p>قائمة بجميع المنتجات المتوفرة في النظام</p>
+            </div>
+            <div class="user-info">
+                <i class="fas fa-user-circle"></i>
+                @username
+            </div>
+        </div>
+
+        <!-- بطاقة البحث -->
+        <div class="search-card">
+            <div class="search-label">
+                <i class="fas fa-search"></i>
+                <span>ابحث عن منتج</span>
+            </div>
+            <div class="search-wrapper">
+                <i class="fas fa-search search-icon"></i>
+                <input type="text"
+                       id="searchBox"
+                       class="search-input"
+                       placeholder="ابحث بالكود المختصر، السيريال، أو اسم المنتج..."
+                       autocomplete="off">
+                <i class="fas fa-times-circle clear-search" id="clearSearch" onclick="clearSearch()"></i>
+            </div>
+            <div class="search-stats" id="searchStats">
+                <i class="fas fa-info-circle"></i> إجمالي المنتجات: @Model.Count
+            </div>
+        </div>
+
+        <!-- بطاقة الجدول -->
+        <div class="table-card">
+            <div class="table-header">
+                <div class="table-title">
+                    <i class="fas fa-table"></i>
+                    <h3>قائمة المنتجات</h3>
+                </div>
+                <div class="selection-message" id="selectionMessage" style="display: none;">
+                    <i class="fas fa-check-circle"></i>
+                    <span id="selectedProductName"></span>
+                </div>
+                <div class="action-buttons">
+                    <button class="btn-action btn-excel" id="exportExcelBtn" onclick="exportSelectedToExcel()" disabled>
+                        <i class="fas fa-file-excel"></i> تصدير
+                    </button>
+                    <button class="btn-action btn-pdf" id="printPdfBtn" onclick="printSelectedProduct()" disabled>
+                        <i class="fas fa-file-pdf"></i> طباعة المنتج
+                    </button>
+                </div>
+            </div>
+
+            <div class="table-responsive">
+                <table class="product-table" id="productsTable">
+                    <thead>
+                        <tr>
+                            <th>#</th>
+                            <th>اسم المنتج</th>
+                            <th>الكود المختصر</th>
+                            <th>السيريال</th>
+                            <th>سعر البيع</th>
+                        </tr>
+                    </thead>
+                    <tbody id="tableBody">
+                        @for (int i = 0; i < Model.Count; i++)
+                        {
+                            var product = Model[i];
+                            <tr onclick="selectProduct(@i, '@product.Name', '@product.ShortCode', '@product.SerialNumber', @product.SalePrice)">
+                                <td>@(i + 1)</td>
+                                <td class="product-name">@product.Name</td>
+                                <td><span class="product-code">@product.ShortCode</span></td>
+                                <td><span class="product-serial">@product.SerialNumber</span></td>
+                                <td class="product-price">@product.SalePrice.ToString("N0") <span class="price-currency">ج.م</span></td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- رسالة عدم وجود نتائج -->
+            <div id="noResults" class="no-results" style="display: none;">
+                <i class="fas fa-frown"></i>
+                <h4>لا توجد نتائج</h4>
+                <p>لم يتم العثور على منتجات تطابق بحثك</p>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // متغيرات عامة
+        let selectedProduct = null;
+        let allProducts = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(Model));
+
+        // عناصر الصفحة
+        const searchBox = document.getElementById("searchBox");
+        const tableBody = document.getElementById("tableBody");
+        const rows = tableBody.getElementsByTagName("tr");
+        const noResults = document.getElementById("noResults");
+        const searchStats = document.getElementById("searchStats");
+        const clearSearchBtn = document.getElementById("clearSearch");
+        const exportExcelBtn = document.getElementById("exportExcelBtn");
+        const printPdfBtn = document.getElementById("printPdfBtn");
+        const selectionMessage = document.getElementById("selectionMessage");
+        const selectedProductName = document.getElementById("selectedProductName");
+
+        // دالة تحديد المنتج
+        function selectProduct(index, name, shortCode, serial, price) {
+            // إزالة التحديد من جميع الصفوف
+            for (let i = 0; i < rows.length; i++) {
+                rows[i].classList.remove('selected');
+            }
+
+            // تحديد الصف المختار
+            event.currentTarget.classList.add('selected');
+
+            // حفظ المنتج المحدد
+            selectedProduct = {
+                index: index,
+                name: name,
+                shortCode: shortCode,
+                serial: serial,
+                price: price,
+                originalData: allProducts[index]
+            };
+
+            // تفعيل الأزرار
+            exportExcelBtn.disabled = false;
+            printPdfBtn.disabled = false;
+
+            // إظهار رسالة التحديد
+            selectionMessage.style.display = 'flex';
+            selectedProductName.innerText = `تم تحديد: ${name}`;
+        }
+
+        // دالة تصدير المنتج المحدد إلى Excel
+        function exportSelectedToExcel() {
+            if (!selectedProduct) {
+                alert('الرجاء تحديد منتج أولاً');
+                return;
+            }
+
+            let csv = "اسم المنتج,الكود المختصر,السيريال,سعر البيع\n";
+            csv += `"${selectedProduct.name}","${selectedProduct.shortCode}","${selectedProduct.serial}",${selectedProduct.price}\n`;
+
+            const blob = new Blob(["\uFEFF" + csv], { type: "text/csv;charset=utf-8;" });
+            const link = document.createElement("a");
+            const url = URL.createObjectURL(blob);
+            link.href = url;
+            link.setAttribute("download", `${selectedProduct.name}.csv`);
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            URL.revokeObjectURL(url);
+        }
+
+        // دالة طباعة المنتج المحدد
+        function printSelectedProduct() {
+            if (!selectedProduct) {
+                alert('الرجاء تحديد منتج أولاً');
+                return;
+            }
+
+            // إنشاء عنصر مؤقت للفاتورة
+            const printContainer = document.createElement('div');
+            printContainer.style.width = '80mm';
+            printContainer.style.padding = '8px';
+            printContainer.style.fontFamily = 'Segoe UI, Tahoma, sans-serif';
+            printContainer.style.background = 'white';
+            printContainer.style.direction = 'rtl';
+            printContainer.style.margin = '0 auto';
+            printContainer.style.boxSizing = 'border-box';
+
+            printContainer.innerHTML = `
+                <div style="width: 100%; background: #fff; border-radius: 8px; padding: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.1); font-size: 10px; line-height: 1.3; box-sizing: border-box; text-align: center;">
+                    <!-- رأس الفاتورة -->
+                    <div style="text-align: center; border-bottom: 1px dashed #4361ee; padding-bottom: 8px; margin-bottom: 8px; width: 100%;">
+                        <h1 style="font-size: 16px; font-weight: bold; color: #4361ee; margin: 0;">Mobile📱Shop</h1>
+                        <div style="color: #7f8c8d; font-size: 8px; margin-top: 3px;">01064211484</div>
+                        <div style="background: #4361ee; color: white; padding: 4px; font-size: 11px; border-radius: 4px; margin-top: 6px; font-weight: bold;">
+                            Product Invoice
+                        </div>
+                    </div>
+
+                    <!-- معلومات الفاتورة -->
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 4px; margin-bottom: 8px; width: 100%;">
+                        <div style="background: #f8f9fa; padding: 4px; border-radius: 4px; text-align: center;">
+                            <span style="font-size: 7px; color: #7f8c8d; display: block;">رقم المنتج</span>
+                            <span style="font-size: 9px; font-weight: bold; color: #2c3e50; display: block;">${selectedProduct.shortCode}</span>
+                        </div>
+                    </div>
+
+                    <!-- خط منقط -->
+                    <div style="border-top: 1px dashed #ccc; margin: 6px 0; width: 100%;"></div>
+
+                    <!-- إحصائيات سريعة -->
+                    <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 4px; margin: 8px 0; width: 100%;">
+                        <div style="background: #f8f9fa; padding: 4px; border-radius: 4px; text-align: center; border-right: 2px solid #4361ee;">
+                            <div style="font-size: 6px; color: #7f8c8d;">الكود</div>
+                            <div style="font-size: 9px; font-weight: bold; color: #2c3e50;">${selectedProduct.shortCode}</div>
+                        </div>
+                        <div style="background: #f8f9fa; padding: 4px; border-radius: 4px; text-align: center; border-right: 2px solid #4361ee;">
+                            <div style="font-size: 6px; color: #7f8c8d;">السعر</div>
+                            <div style="font-size: 9px; font-weight: bold; color: #27ae60;">${selectedProduct.price} LE</div>
+                        </div>
+                    </div>
+
+                    <!-- اسم المنتج بشكل بارز -->
+                    <div style="background: #4361ee; color: white; padding: 6px; border-radius: 4px; text-align: center; font-size: 11px; font-weight: bold; margin-bottom: 8px; width: 100%;">
+                        ${selectedProduct.name}
+                    </div>
+
+                    <!-- تفاصيل المنتج -->
+                    <div style="margin: 10px 0; width: 100%;">
+                        <div style="display: flex; justify-content: space-between; padding: 4px 0; border-bottom: 1px dashed #eee; font-size: 9px; width: 100%;">
+                            <span style="color: #4361ee; font-weight: bold;">🔑 السيريال:</span>
+                            <span style="color: #333;">${selectedProduct.serial}</span>
+                        </div>
+                    </div>
+
+                    <!-- سعر البيع بشكل بارز -->
+                    <div style="background: linear-gradient(135deg, #4361ee, #3f37c9); color: white; border-radius: 6px; padding: 8px; margin: 8px 0; width: 100%;">
+                        <div style="display: flex; justify-content: space-between; font-size: 12px; font-weight: bold;">
+                            <span>💰 سعر البيع</span>
+                            <span>${selectedProduct.price} ج.م</span>
+                        </div>
+                    </div>
+
+                    <!-- خط منقط -->
+                    <div style="border-top: 1px dashed #ccc; margin: 6px 0; width: 100%;"></div>
+
+                    <!-- الفوتر -->
+                    <div style="margin-top: 8px; font-size: 6px; color: #777; text-align: center; border-top: 1px solid #eee; padding-top: 4px; width: 100%;">
+                        <div>Mobile📱Shop - ${new Date().toLocaleDateString('ar-EG')}</div>
+                        <div>شكراً لتعاملكم معنا ✨</div>
+                    </div>
+                </div>
+            `;
+
+            document.body.appendChild(printContainer);
+
+            // تحويل إلى PDF
+            html2canvas(printContainer, {
+                scale: 2,
+                backgroundColor: '#ffffff',
+                windowWidth: printContainer.scrollWidth,
+                windowHeight: printContainer.scrollHeight
+            }).then(canvas => {
+                const { jsPDF } = window.jspdf;
+
+                const imgWidth = 80; // mm
+                const imgHeight = (canvas.height * imgWidth) / canvas.width;
+
+                const pdf = new jsPDF({
+                    orientation: 'portrait',
+                    unit: 'mm',
+                    format: [imgWidth, imgHeight]
+                });
+
+                const imgData = canvas.toDataURL('image/png');
+                pdf.addImage(imgData, 'PNG', 0, 0, imgWidth, imgHeight, undefined, 'FAST');
+
+                pdf.save(`منتج_${selectedProduct.name}.pdf`);
+
+                document.body.removeChild(printContainer);
+            }).catch(error => {
+                alert('حدث خطأ في الطباعة: ' + error.message);
+                document.body.removeChild(printContainer);
+            });
+        }
+
+        // دالة البحث
+        function filterTable() {
+            const filter = searchBox.value.toUpperCase();
+            let visibleCount = 0;
+
+            for (let i = 0; i < rows.length; i++) {
+                const cells = rows[i].getElementsByTagName("td");
+                let match = false;
+
+                for (let j = 1; j < cells.length; j++) {
+                    if (cells[j].innerText.toUpperCase().indexOf(filter) > -1) {
+                        match = true;
+                        break;
+                    }
+                }
+
+                rows[i].style.display = match ? "" : "none";
+                if (match) visibleCount++;
+            }
+
+            searchStats.innerHTML = `<i class="fas fa-info-circle"></i> عرض ${visibleCount} من إجمالي ${rows.length} منتج`;
+            clearSearchBtn.style.display = filter ? "block" : "none";
+
+            if (visibleCount === 0 && filter) {
+                noResults.style.display = "block";
+            } else {
+                noResults.style.display = "none";
+            }
+
+            // إلغاء التحديد إذا كان المنتج المحدد مخفي
+            if (selectedProduct && rows[selectedProduct.index]?.style.display === 'none') {
+                selectedProduct = null;
+                exportExcelBtn.disabled = true;
+                printPdfBtn.disabled = true;
+                selectionMessage.style.display = 'none';
+                for (let i = 0; i < rows.length; i++) {
+                    rows[i].classList.remove('selected');
+                }
+            }
+        }
+
+        // دالة مسح البحث
+        function clearSearch() {
+            searchBox.value = "";
+            filterTable();
+            searchBox.focus();
+        }
+
+        // أحداث البحث
+        searchBox.addEventListener("keyup", filterTable);
+        searchBox.addEventListener("paste", function() {
+            setTimeout(filterTable, 100);
+        });
+
+        // تحديث البحث عند تحميل الصفحة
+        window.onload = function() {
+            searchStats.innerHTML = `<i class="fas fa-info-circle"></i> إجمالي المنتجات: ${rows.length}`;
+        };
+    </script>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

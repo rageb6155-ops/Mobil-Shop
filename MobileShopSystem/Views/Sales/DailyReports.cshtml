@@ -1,0 +1,1286 @@
+﻿@using System.Text.Json
+@{
+    ViewData["Title"] = "تقارير المبيعات اليومية";
+    var username = Context.Session.GetString("Username");
+    var isAdmin = Context.Session.GetString("IsAdmin") == "True";
+    var today = DateTime.Now;
+    var dayName = today.ToString("dddd", new System.Globalization.CultureInfo("ar-EG"));
+
+    // تحويل النموذج إلى القائمة المتوقعة بأمان
+    var salesList = new List<MobileShopSystem.ViewModels.SaleReportViewModel>();
+
+    if (Model != null)
+    {
+        try
+        {
+            salesList = Model as List<MobileShopSystem.ViewModels.SaleReportViewModel> ?? new List<MobileShopSystem.ViewModels.SaleReportViewModel>();
+        }
+        catch
+        {
+            salesList = new List<MobileShopSystem.ViewModels.SaleReportViewModel>();
+        }
+    }
+
+    // العمليات النشطة فقط (غير محذوفة)
+    var activeSales = salesList.Where(s => !s.IsDeleted).ToList();
+    var totalCashActive = activeSales.Sum(s => s.TotalAmount);
+    var totalPaidActive = activeSales.Sum(s => s.PaidAmount);
+    var totalRemainingActive = activeSales.Sum(s => s.RemainingAmount);
+
+    // إحصائيات
+    var totalMachines = activeSales.Sum(s => s.MachinesTotal ?? 0);
+    var editedSales = salesList.Where(s => s.IsModified && !s.IsDeleted).ToList();
+    var editedCount = editedSales.Count;
+    var deletedSales = salesList.Where(s => s.IsDeleted).ToList();
+    var deletedCount = deletedSales.Count;
+
+    // فروق التعديلات
+    var totalDifference = editedCount > 0 ? (activeSales.Where(s => s.IsModified).Sum(s => s.TotalAmount) - activeSales.Where(s => s.IsModified).Sum(s => s.OriginalTotalAmount)) : 0;
+    var differenceSign = totalDifference >= 0 ? "+" : "";
+    var differenceClass = totalDifference >= 0 ? "positive" : "negative";
+}
+
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>@ViewData["Title"]</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" />
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, sans-serif;
+            background: #ffffff;
+            margin: 0;
+            padding: 20px;
+            color: #333;
+        }
+
+        .page-wrapper {
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+
+        /* بطاقة العنوان */
+        .header-card {
+            background: white;
+            border-radius: 16px;
+            padding: 20px 25px;
+            margin-bottom: 25px;
+            box-shadow: 0 5px 20px rgba(0,0,0,0.05);
+            border: 1px solid #f0f0f0;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 15px;
+        }
+
+        .header-title h1 {
+            margin: 0;
+            font-size: 26px;
+            font-weight: 600;
+            color: #17a2b8;
+        }
+
+        .header-title p {
+            margin: 5px 0 0;
+            color: #6c757d;
+            font-size: 14px;
+        }
+
+        .date-info {
+            display: flex;
+            gap: 20px;
+            align-items: center;
+            background: #f8f9fa;
+            padding: 8px 20px;
+            border-radius: 50px;
+            border: 1px solid #e9ecef;
+        }
+
+        .date-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            color: #17a2b8;
+        }
+
+            .date-item i {
+                font-size: 16px;
+            }
+
+        .user-info {
+            background: #f8f9fa;
+            color: #17a2b8;
+            padding: 8px 20px;
+            border-radius: 50px;
+            font-size: 14px;
+            font-weight: 500;
+            border: 1px solid #e9ecef;
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+
+            .user-info i {
+                margin-left: 8px;
+            }
+
+        /* بطاقة البحث */
+        .search-card {
+            background: white;
+            border-radius: 16px;
+            padding: 20px 25px;
+            margin-bottom: 25px;
+            box-shadow: 0 5px 20px rgba(0,0,0,0.05);
+            border: 1px solid #f0f0f0;
+        }
+
+        .search-title {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 15px;
+            color: #17a2b8;
+            font-weight: 600;
+        }
+
+        .search-form {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+            align-items: flex-end;
+        }
+
+        .date-group {
+            flex: 1;
+            min-width: 200px;
+        }
+
+        .date-label {
+            display: block;
+            margin-bottom: 5px;
+            color: #6c757d;
+            font-size: 13px;
+        }
+
+        .date-input {
+            width: 100%;
+            padding: 12px 15px;
+            border: 2px solid #e9ecef;
+            border-radius: 8px;
+            font-size: 14px;
+        }
+
+        .btn-search {
+            background: #17a2b8;
+            color: white;
+            border: none;
+            padding: 12px 25px;
+            border-radius: 8px;
+            font-size: 14px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.3s;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+            .btn-search:hover {
+                background: #138496;
+                transform: translateY(-2px);
+            }
+
+        /* بطاقة الإحصائيات */
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 20px;
+            margin-bottom: 25px;
+        }
+
+        .stat-card {
+            background: white;
+            border-radius: 12px;
+            padding: 20px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.05);
+            border: 1px solid #f0f0f0;
+            border-right: 4px solid;
+            transition: all 0.3s;
+        }
+
+            .stat-card:hover {
+                transform: translateY(-2px);
+                box-shadow: 0 8px 25px rgba(0,0,0,0.1);
+            }
+
+            .stat-card.total {
+                border-right-color: #17a2b8;
+            }
+
+            .stat-card.cash {
+                border-right-color: #28a745;
+            }
+
+            .stat-card.machines {
+                border-right-color: #ffc107;
+            }
+
+            .stat-card.edited {
+                border-right-color: #fd7e14;
+            }
+
+            .stat-card.deleted {
+                border-right-color: #dc3545;
+            }
+
+            .stat-card.difference.positive {
+                border-right-color: #28a745;
+            }
+
+            .stat-card.difference.negative {
+                border-right-color: #dc3545;
+            }
+
+        .stat-label {
+            font-size: 13px;
+            color: #6c757d;
+            margin-bottom: 5px;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+
+        .stat-value {
+            font-size: 24px;
+            font-weight: bold;
+            color: #333;
+        }
+
+        .stat-detail {
+            font-size: 12px;
+            color: #6c757d;
+            margin-top: 5px;
+        }
+
+        .difference.positive .stat-value {
+            color: #28a745;
+        }
+
+        .difference.negative .stat-value {
+            color: #dc3545;
+        }
+
+        /* تبويبات العرض */
+        .summary-tabs {
+            display: flex;
+            gap: 10px;
+            margin: 20px 0;
+            flex-wrap: wrap;
+        }
+
+        .summary-tab {
+            padding: 10px 20px;
+            border-radius: 8px;
+            font-size: 14px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.3s;
+            border: 1px solid #dee2e6;
+            background: white;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+            .summary-tab:hover {
+                transform: translateY(-2px);
+                box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+            }
+
+            .summary-tab.active {
+                background: #17a2b8;
+                color: white;
+                border-color: #17a2b8;
+            }
+
+            .summary-tab.edited-tab {
+                color: #fd7e14;
+                border-color: #fd7e14;
+            }
+
+                .summary-tab.edited-tab.active {
+                    background: #fd7e14;
+                    color: white;
+                }
+
+            .summary-tab.deleted-tab {
+                color: #dc3545;
+                border-color: #dc3545;
+            }
+
+                .summary-tab.deleted-tab.active {
+                    background: #dc3545;
+                    color: white;
+                }
+
+        /* بطاقة العمليات */
+        .sales-card {
+            background: white;
+            border-radius: 16px;
+            padding: 25px;
+            box-shadow: 0 5px 20px rgba(0,0,0,0.05);
+            border: 1px solid #f0f0f0;
+        }
+
+        .card-header-custom {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            padding-bottom: 15px;
+            border-bottom: 2px solid #f0f0f0;
+            flex-wrap: wrap;
+            gap: 15px;
+        }
+
+            .card-header-custom h2 {
+                margin: 0;
+                color: #17a2b8;
+                font-weight: 600;
+                font-size: 22px;
+            }
+
+        .badge-count {
+            background: #17a2b8;
+            color: white;
+            padding: 5px 15px;
+            border-radius: 50px;
+            font-size: 14px;
+            font-weight: 500;
+        }
+
+        /* قائمة العمليات */
+        .sales-list {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+
+        .sale-item {
+            background: #f8f9fa;
+            border-radius: 12px;
+            padding: 20px;
+            border: 1px solid #e9ecef;
+            transition: all 0.3s;
+        }
+
+            .sale-item:hover {
+                box-shadow: 0 8px 25px rgba(0,0,0,0.1);
+            }
+
+            .sale-item.normal {
+                border-right: 4px solid #17a2b8;
+            }
+
+            .sale-item.edited {
+                border-right: 4px solid #fd7e14;
+                background: #fff3e0;
+            }
+
+            .sale-item.deleted {
+                border-right: 4px solid #dc3545;
+                background: #fbe9e7;
+                opacity: 0.8;
+            }
+
+        .sale-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+
+        .sale-user-info {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            flex-wrap: wrap;
+        }
+
+        .user-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 12px;
+            background: #e9ecef;
+        }
+
+            .user-badge.creator {
+                background: #cfe2ff;
+                color: #084298;
+            }
+
+            .user-badge.modifier {
+                background: #fff3cd;
+                color: #664d03;
+            }
+
+            .user-badge i {
+                font-size: 11px;
+            }
+
+        .sale-number {
+            font-weight: bold;
+            color: #17a2b8;
+        }
+
+        .sale-time {
+            font-size: 13px;
+            color: #6c757d;
+        }
+
+        .sale-badge {
+            padding: 3px 10px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 500;
+        }
+
+        .badge-edited {
+            background: #fd7e14;
+            color: white;
+        }
+
+        .badge-deleted {
+            background: #dc3545;
+            color: white;
+        }
+
+        .sale-details {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin: 15px 0;
+        }
+
+        .detail-group {
+            background: white;
+            border-radius: 8px;
+            padding: 10px;
+        }
+
+        .detail-title {
+            font-size: 12px;
+            color: #6c757d;
+            margin-bottom: 5px;
+        }
+
+        .detail-value {
+            font-size: 14px;
+            font-weight: 600;
+        }
+
+        .detail-original {
+            font-size: 11px;
+            color: #999;
+            text-decoration: line-through;
+            margin-top: 2px;
+        }
+
+        .detail-diff {
+            font-size: 11px;
+            font-weight: bold;
+            margin-top: 2px;
+        }
+
+            .detail-diff.positive {
+                color: #28a745;
+            }
+
+            .detail-diff.negative {
+                color: #dc3545;
+            }
+
+        .items-list {
+            margin-top: 10px;
+        }
+
+        .item-row {
+            display: flex;
+            justify-content: space-between;
+            padding: 5px 0;
+            border-bottom: 1px dashed #eee;
+            font-size: 13px;
+        }
+
+            .item-row.changed {
+                background: #fff3cd;
+                border-radius: 4px;
+                padding: 5px 10px;
+                margin: 5px 0;
+            }
+
+        .item-type {
+            background: #e9ecef;
+            padding: 2px 8px;
+            border-radius: 12px;
+            font-size: 11px;
+        }
+
+        .item-price {
+            font-weight: 600;
+            color: #28a745;
+        }
+
+        .item-price-old {
+            font-size: 11px;
+            color: #999;
+            text-decoration: line-through;
+            margin-left: 5px;
+        }
+
+        .item-price-new {
+            font-weight: 600;
+            color: #28a745;
+        }
+
+        .item-change-badge {
+            background: #fd7e14;
+            color: white;
+            padding: 2px 6px;
+            border-radius: 10px;
+            font-size: 10px;
+            margin-right: 5px;
+        }
+
+        /* أزرار */
+        .action-buttons {
+            display: flex;
+            gap: 10px;
+            margin-top: 15px;
+            flex-wrap: wrap;
+        }
+
+        .btn {
+            padding: 8px 15px;
+            border-radius: 6px;
+            color: #fff;
+            text-decoration: none;
+            font-size: 13px;
+            font-weight: 500;
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+            transition: all 0.3s;
+            border: none;
+            cursor: pointer;
+        }
+
+        .btn-info {
+            background: #17a2b8;
+        }
+
+            .btn-info:hover {
+                background: #138496;
+            }
+
+        .btn-warning {
+            background: #ffc107;
+            color: #333;
+        }
+
+            .btn-warning:hover {
+                background: #e0a800;
+            }
+
+        .btn-success {
+            background: #28a745;
+        }
+
+            .btn-success:hover {
+                background: #218838;
+            }
+
+        .btn-restore {
+            background: #28a745;
+            color: white;
+        }
+
+            .btn-restore:hover {
+                background: #218838;
+            }
+
+        /* رسالة عدم وجود نتائج */
+        .no-results {
+            text-align: center;
+            padding: 60px 20px;
+            background: #f8f9fa;
+            border-radius: 12px;
+            color: #6c757d;
+        }
+
+            .no-results i {
+                font-size: 60px;
+                margin-bottom: 15px;
+            }
+
+        /* قسم التغييرات */
+        .changes-section {
+            margin-top: 15px;
+            padding: 15px;
+            background: #fff3cd;
+            border-radius: 8px;
+            border-right: 4px solid #fd7e14;
+        }
+
+        .changes-title {
+            color: #856404;
+            font-size: 14px;
+            font-weight: bold;
+            margin-bottom: 10px;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+
+        .change-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 8px;
+            background: white;
+            border-radius: 6px;
+            margin-bottom: 5px;
+        }
+
+        .change-label {
+            font-size: 12px;
+            color: #666;
+        }
+
+        .change-values {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+        }
+
+        .old-value {
+            color: #dc3545;
+            text-decoration: line-through;
+            font-size: 12px;
+        }
+
+        .new-value {
+            color: #28a745;
+            font-weight: bold;
+            font-size: 12px;
+        }
+
+        .change-arrow {
+            color: #fd7e14;
+            font-size: 12px;
+        }
+
+        @@media (max-width: 768px) {
+            .search-form {
+                flex-direction: column;
+            }
+
+            .date-group {
+                width: 100%;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="page-wrapper">
+        <!-- بطاقة العنوان -->
+        <div class="header-card">
+            <div class="header-title">
+                <h1>
+                    <i class="fas fa-chart-bar"></i> تقارير المبيعات اليومية
+                </h1>
+                <p>عرض وتحليل عمليات البيع</p>
+            </div>
+            <div class="user-info">
+                <div class="date-info">
+                    <div class="date-item" id="currentDate">
+                        <i class="fas fa-calendar-alt"></i>
+                        <span>@today.ToString("yyyy-MM-dd")</span>
+                    </div>
+                    <div class="date-item" id="currentTime">
+                        <i class="fas fa-clock"></i>
+                        <span>@today.ToString("HH:mm:ss")</span>
+                    </div>
+                    <div class="date-item">
+                        <i class="fas fa-sun"></i>
+                        <span>@dayName</span>
+                    </div>
+                </div>
+                <i class="fas fa-user-circle"></i> @username
+            </div>
+        </div>
+
+        <!-- بطاقة البحث -->
+        <div class="search-card">
+            <div class="search-title">
+                <i class="fas fa-calendar-alt"></i>
+                <span>اختر التاريخ</span>
+            </div>
+            <form method="get" asp-action="DailyReports" class="search-form">
+                <div class="date-group">
+                    <label class="date-label">من تاريخ</label>
+                    <input type="date" name="fromDate" class="date-input" value="@ViewBag.FromDate?.ToString("yyyy-MM-dd")" />
+                </div>
+                <div class="date-group">
+                    <label class="date-label">إلى تاريخ</label>
+                    <input type="date" name="toDate" class="date-input" value="@ViewBag.ToDate?.ToString("yyyy-MM-dd")" />
+                </div>
+                <button type="submit" class="btn-search">
+                    <i class="fas fa-search"></i> عرض التقارير
+                </button>
+            </form>
+        </div>
+
+        @if (salesList != null && salesList.Any())
+        {
+            <!-- إحصائيات سريعة -->
+            <div class="stats-grid">
+                <div class="stat-card total">
+                    <div class="stat-label">
+                        <i class="fas fa-chart-line"></i> إجمالي المبيعات
+                    </div>
+                    <div class="stat-value">@totalCashActive.ToString("N2") ج.م</div>
+                    <div class="stat-detail">عدد العمليات: @activeSales.Count</div>
+                </div>
+
+                <div class="stat-card cash">
+                    <div class="stat-label">
+                        <i class="fas fa-money-bill-wave"></i> المدفوع
+                    </div>
+                    <div class="stat-value">@totalPaidActive.ToString("N2") ج.م</div>
+                    <div class="stat-detail">المتبقي: @totalRemainingActive.ToString("N2") ج.م</div>
+                </div>
+
+                @if (totalMachines > 0)
+                {
+                    <div class="stat-card machines">
+                        <div class="stat-label">
+                            <i class="fas fa-cog"></i> قيمة الماكينات
+                        </div>
+                        <div class="stat-value">@totalMachines.ToString("N2") ج.م</div>
+                    </div>
+                }
+
+                @if (editedCount > 0)
+                {
+                    <div class="stat-card edited">
+                        <div class="stat-label">
+                            <i class="fas fa-edit"></i> عمليات معدلة
+                        </div>
+                        <div class="stat-value">@editedCount</div>
+                        <div class="stat-detail">قيمتها: @editedSales.Sum(s => s.TotalAmount).ToString("N2") ج.م</div>
+                    </div>
+                }
+
+                @if (deletedCount > 0)
+                {
+                    <div class="stat-card deleted">
+                        <div class="stat-label">
+                            <i class="fas fa-trash"></i> عمليات محذوفة
+                        </div>
+                        <div class="stat-value">@deletedCount</div>
+                        <div class="stat-detail">قيمتها: @deletedSales.Sum(s => s.TotalAmount).ToString("N2") ج.م</div>
+                    </div>
+                }
+
+                @if (totalDifference != 0)
+                {
+                    <div class="stat-card difference @differenceClass">
+                        <div class="stat-label">
+                            <i class="fas fa-balance-scale"></i> فرق التعديلات
+                        </div>
+                        <div class="stat-value">@differenceSign@(totalDifference.ToString("N2")) ج.م</div>
+                        <div class="stat-detail">@(totalDifference > 0 ? "زيادة" : "نقصان") عن الأصلي</div>
+                    </div>
+                }
+            </div>
+        }
+
+        <!-- تبويبات العرض -->
+        <div class="summary-tabs">
+            <button class="summary-tab active" onclick="showTab('active')">
+                <i class="fas fa-check-circle"></i> العمليات النشطة (@activeSales.Count)
+            </button>
+            @if (editedCount > 0)
+            {
+                <button class="summary-tab edited-tab" onclick="showTab('edited')">
+                    <i class="fas fa-edit"></i> العمليات المعدلة (@editedCount)
+                </button>
+            }
+            @if (deletedCount > 0)
+            {
+                <button class="summary-tab deleted-tab" onclick="showTab('deleted')">
+                    <i class="fas fa-trash"></i> العمليات المحذوفة (@deletedCount)
+                </button>
+            }
+        </div>
+
+        <!-- بطاقة العمليات -->
+        <div class="sales-card">
+            <div class="card-header-custom">
+                <h2>
+                    <i class="fas fa-list-alt"></i> قائمة العمليات
+                </h2>
+            </div>
+
+            @if (salesList == null || !salesList.Any())
+            {
+                <div class="no-results">
+                    <i class="fas fa-calendar-times"></i>
+                    <h4>لا توجد عمليات</h4>
+                    <p>لم يتم العثور على أي عمليات في التاريخ المحدد</p>
+                </div>
+            }
+            else
+            {
+                <!-- العمليات النشطة -->
+                <div id="activeSales" class="sales-list">
+                    @{
+                        var userColors = new Dictionary<string, string>();
+                        var colorsList = new[] { "#4361ee", "#f39c12", "#43cea2", "#ff416c", "#834d9b", "#00c6ff", "#27ae60", "#fd7e14", "#9b59b6", "#3498db" };
+                        int idx = 0;
+                        foreach (var user in activeSales.Select(s => s.UserName).Distinct())
+                        {
+                            userColors[user] = colorsList[idx % colorsList.Length];
+                            idx++;
+                        }
+                    }
+
+                    @foreach (var sale in activeSales.OrderByDescending(s => s.SaleDate))
+                    {
+                        string itemClass = sale.IsModified ? "edited" : "normal";
+
+                        <div class="sale-item @itemClass" id="sale-@sale.Id">
+                            <div class="sale-header">
+                                <div class="sale-user-info">
+                                    <div class="user-color" style="background: @userColors[sale.UserName]; width: 12px; height: 12px; border-radius: 50%;"></div>
+                                    <span class="sale-number">@sale.SaleNumber</span>
+                                    <span class="sale-time">@sale.SaleDate.ToString("yyyy-MM-dd HH:mm:ss")</span>
+                                    <span class="user-badge creator" title="المستخدم المضيف">
+                                        <i class="fas fa-user-plus"></i> @sale.UserName
+                                    </span>
+                                    @if (sale.IsModified && sale.Modifications != null && sale.Modifications.Any())
+                                    {
+                                        <span class="user-badge modifier" title="آخر تعديل بواسطة">
+                                            <i class="fas fa-edit"></i> @sale.Modifications.First().ModifiedBy
+                                        </span>
+                                    }
+                                </div>
+                                @if (sale.IsModified)
+                                {
+                                    <span class="sale-badge badge-edited">
+                                        <i class="fas fa-edit"></i> معدلة
+                                    </span>
+                                }
+                            </div>
+
+                            <div class="sale-details">
+                                <div class="detail-group">
+                                    <div class="detail-title">المبلغ الكلي</div>
+                                    <div class="detail-value">@sale.TotalAmount.ToString("N2") ج.م</div>
+                                    @if (sale.IsModified && sale.TotalAmount != sale.OriginalTotalAmount)
+                                    {
+                                        <div class="detail-original">الأصلي: @sale.OriginalTotalAmount.ToString("N2") ج.م</div>
+                                        var diff = sale.TotalAmount - sale.OriginalTotalAmount;
+                                        <div class="detail-diff @(diff > 0 ? "positive" : "negative")">
+                                            @(diff > 0 ? "+" : "")@diff.ToString("N2") ج.م
+                                        </div>
+                                    }
+                                </div>
+                                <div class="detail-group">
+                                    <div class="detail-title">المدفوع</div>
+                                    <div class="detail-value">@sale.PaidAmount.ToString("N2") ج.م</div>
+                                    @if (sale.IsModified && sale.PaidAmount != sale.OriginalPaidAmount)
+                                    {
+                                        <div class="detail-original">الأصلي: @sale.OriginalPaidAmount.ToString("N2") ج.م</div>
+                                        var diff = sale.PaidAmount - sale.OriginalPaidAmount;
+                                        <div class="detail-diff @(diff > 0 ? "positive" : "negative")">
+                                            @(diff > 0 ? "+" : "")@diff.ToString("N2") ج.م
+                                        </div>
+                                    }
+                                </div>
+                                <div class="detail-group">
+                                    <div class="detail-title">المتبقي</div>
+                                    <div class="detail-value">@sale.RemainingAmount.ToString("N2") ج.م</div>
+                                    @if (sale.IsModified && sale.RemainingAmount != sale.OriginalRemainingAmount)
+                                    {
+                                        <div class="detail-original">الأصلي: @sale.OriginalRemainingAmount.ToString("N2") ج.م</div>
+                                        var diff = sale.RemainingAmount - sale.OriginalRemainingAmount;
+                                        <div class="detail-diff @(diff > 0 ? "positive" : "negative")">
+                                            @(diff > 0 ? "+" : "")@diff.ToString("N2") ج.م
+                                        </div>
+                                    }
+                                </div>
+                                @if (sale.MachinesTotal > 0)
+                                {
+                                    <div class="detail-group">
+                                        <div class="detail-title">قيمة الماكينات</div>
+                                        <div class="detail-value">@sale.MachinesTotal?.ToString("N2") ج.م</div>
+                                    </div>
+                                }
+                            </div>
+
+                            <!-- عرض العناصر المباعة مع إظهار التغييرات -->
+                            <div class="items-list">
+                                @if (sale.IsModified && sale.Modifications != null && sale.Modifications.Any())
+                                {
+                                    var lastMod = sale.Modifications.First();
+                                    if (lastMod.OldItems != null && lastMod.NewItems != null)
+                                    {
+                                        var oldItemsDict = lastMod.OldItems.ToDictionary(x => x.ItemName, x => x);
+                                        var newItemsDict = lastMod.NewItems.ToDictionary(x => x.ItemName, x => x);
+
+                                        // عرض العناصر الجديدة مع تحديد التغييرات
+                                        foreach (var item in sale.Items)
+                                        {
+                                            var isChanged = false;
+                                            var oldPrice = (decimal?)null;
+
+                                            if (oldItemsDict.ContainsKey(item.ItemName))
+                                            {
+                                                oldPrice = oldItemsDict[item.ItemName].ItemPrice;
+                                                isChanged = oldPrice != item.ItemPrice;
+                                            }
+
+                                            <div class="item-row @(isChanged ? "changed" : "")">
+                                                <span>
+                                                    <span class="item-type">@item.SaleTypeName</span>
+                                                    @item.ItemName
+                                                    @if (isChanged)
+                                                    {
+                                                        <span class="item-change-badge">
+                                                            <i class="fas fa-pencil-alt"></i> تعديل
+                                                        </span>
+                                                    }
+                                                    else if (!oldItemsDict.ContainsKey(item.ItemName))
+                                                    {
+                                                        <span class="item-change-badge" style="background: #28a745;">
+                                                            <i class="fas fa-plus"></i> إضافة
+                                                        </span>
+                                                    }
+                                                </span>
+                                                <span>
+                                                    @if (isChanged && oldPrice.HasValue)
+                                                    {
+                                                        <span class="item-price-old">@oldPrice.Value.ToString("N2") ج.م</span>
+                                                        <span class="item-price-new">@item.ItemPrice.ToString("N2") ج.م</span>
+                                                    }
+                                                    else
+                                                    {
+                                                        <span class="item-price">@item.ItemPrice.ToString("N2") ج.م</span>
+                                                    }
+                                                </span>
+                                            </div>
+                                        }
+
+                                        // عرض العناصر المحذوفة
+                                        foreach (var oldItem in lastMod.OldItems)
+                                        {
+                                            if (!newItemsDict.ContainsKey(oldItem.ItemName))
+                                            {
+                                                <div class="item-row changed" style="background: #f8d7da;">
+                                                    <span>
+                                                        <span class="item-type">@oldItem.SaleTypeName</span>
+                                                        @oldItem.ItemName
+                                                        <span class="item-change-badge" style="background: #dc3545;">
+                                                            <i class="fas fa-trash"></i> حذف
+                                                        </span>
+                                                    </span>
+                                                    <span class="item-price-old">@oldItem.ItemPrice.ToString("N2") ج.م</span>
+                                                </div>
+                                            }
+                                        }
+                                    }
+                                    else
+                                    {
+                                        // عرض عادي بدون تغييرات
+                                        foreach (var item in sale.Items)
+                                        {
+                                            <div class="item-row">
+                                                <span>
+                                                    <span class="item-type">@item.SaleTypeName</span>
+                                                    @item.ItemName
+                                                </span>
+                                                <span class="item-price">@item.ItemPrice.ToString("N2") ج.م</span>
+                                            </div>
+                                        }
+                                    }
+                                }
+                                else
+                                {
+                                    // عرض عادي بدون تغييرات
+                                    foreach (var item in sale.Items)
+                                    {
+                                        <div class="item-row">
+                                            <span>
+                                                <span class="item-type">@item.SaleTypeName</span>
+                                                @item.ItemName
+                                            </span>
+                                            <span class="item-price">@item.ItemPrice.ToString("N2") ج.م</span>
+                                        </div>
+                                    }
+                                }
+                            </div>
+
+                            <!-- عرض ملخص التغييرات -->
+                            @if (sale.IsModified && sale.Modifications != null && sale.Modifications.Any())
+                            {
+                                var lastMod = sale.Modifications.First();
+                                if (lastMod.OldAmount.HasValue && lastMod.NewAmount.HasValue && lastMod.OldAmount != lastMod.NewAmount)
+                                {
+                                    <div class="changes-section">
+                                        <div class="changes-title">
+                                            <i class="fas fa-history"></i> ملخص التغييرات
+                                        </div>
+                                        <div class="change-item">
+                                            <span class="change-label">المبلغ الكلي:</span>
+                                            <div class="change-values">
+                                                <span class="old-value">@lastMod.OldAmount.Value.ToString("N2") ج.م</span>
+                                                <span class="change-arrow"><i class="fas fa-arrow-left"></i></span>
+                                                <span class="new-value">@lastMod.NewAmount.Value.ToString("N2") ج.م</span>
+                                                @{
+                                                    var diff = lastMod.NewAmount.Value - lastMod.OldAmount.Value;
+                                                    <span class="detail-diff @(diff > 0 ? "positive" : "negative")" style="margin-right: 5px;">
+                                                        (@(diff > 0 ? "+" : "")@diff.ToString("N2") ج.م)
+                                                    </span>
+                                                }
+                                            </div>
+                                        </div>
+                                        <div class="change-item">
+                                            <span class="change-label">تم التعديل بواسطة:</span>
+                                            <span class="new-value">@lastMod.ModifiedBy</span>
+                                        </div>
+                                        <div class="change-item">
+                                            <span class="change-label">تاريخ التعديل:</span>
+                                            <span class="new-value">@lastMod.ModifiedAt.ToString("yyyy-MM-dd HH:mm")</span>
+                                        </div>
+                                    </div>
+                                }
+                            }
+
+                            <div class="action-buttons">
+                                <a asp-controller="Sales" asp-action="Details" asp-route-id="@sale.Id" class="btn btn-info">
+                                    <i class="fas fa-info-circle"></i> تفاصيل
+                                </a>
+                                <button class="btn btn-warning" onclick="editSale(@sale.Id, '@sale.SaleNumber')">
+                                    <i class="fas fa-edit"></i> تعديل
+                                </button>
+                            </div>
+                        </div>
+                    }
+                </div>
+
+                <!-- العمليات المعدلة -->
+                @if (editedCount > 0)
+                {
+                    <div id="editedSales" class="sales-list" style="display: none;">
+                        @foreach (var sale in editedSales.OrderByDescending(s => s.SaleDate))
+                        {
+                            <div class="sale-item edited">
+                                <div class="sale-header">
+                                    <div class="sale-user-info">
+                                        <span class="sale-number">@sale.SaleNumber</span>
+                                        <span class="sale-time">@sale.SaleDate.ToString("yyyy-MM-dd HH:mm:ss")</span>
+                                        <span class="user-badge creator" title="المستخدم المضيف">
+                                            <i class="fas fa-user-plus"></i> @sale.UserName
+                                        </span>
+                                        @if (sale.Modifications != null && sale.Modifications.Any())
+                                        {
+                                            <span class="user-badge modifier" title="آخر تعديل بواسطة">
+                                                <i class="fas fa-edit"></i> @sale.Modifications.First().ModifiedBy
+                                            </span>
+                                        }
+                                    </div>
+                                    <span class="sale-badge badge-edited">
+                                        <i class="fas fa-edit"></i> معدلة
+                                    </span>
+                                </div>
+
+                                <div class="sale-details">
+                                    <div class="detail-group">
+                                        <div class="detail-title">المبلغ الكلي</div>
+                                        <div class="detail-value">@sale.TotalAmount.ToString("N2") ج.م</div>
+                                        @if (sale.TotalAmount != sale.OriginalTotalAmount)
+                                        {
+                                            <div class="detail-original">الأصلي: @sale.OriginalTotalAmount.ToString("N2") ج.م</div>
+                                        }
+                                    </div>
+                                    <div class="detail-group">
+                                        <div class="detail-title">المدفوع</div>
+                                        <div class="detail-value">@sale.PaidAmount.ToString("N2") ج.م</div>
+                                        @if (sale.PaidAmount != sale.OriginalPaidAmount)
+                                        {
+                                            <div class="detail-original">الأصلي: @sale.OriginalPaidAmount.ToString("N2") ج.م</div>
+                                        }
+                                    </div>
+                                    <div class="detail-group">
+                                        <div class="detail-title">المتبقي</div>
+                                        <div class="detail-value">@sale.RemainingAmount.ToString("N2") ج.م</div>
+                                        @if (sale.RemainingAmount != sale.OriginalRemainingAmount)
+                                        {
+                                            <div class="detail-original">الأصلي: @sale.OriginalRemainingAmount.ToString("N2") ج.م</div>
+                                        }
+                                    </div>
+                                </div>
+
+                                <div class="action-buttons">
+                                    <a asp-controller="Sales" asp-action="Details" asp-route-id="@sale.Id" class="btn btn-info">
+                                        <i class="fas fa-info-circle"></i> تفاصيل
+                                    </a>
+                                </div>
+                            </div>
+                        }
+                    </div>
+                }
+
+                <!-- العمليات المحذوفة -->
+                @if (deletedCount > 0)
+                {
+                    <div id="deletedSales" class="sales-list" style="display: none;">
+                        @foreach (var sale in deletedSales.OrderByDescending(s => s.SaleDate))
+                        {
+                            <div class="sale-item deleted">
+                                <div class="sale-header">
+                                    <div class="sale-user-info">
+                                        <span class="sale-number">@sale.SaleNumber</span>
+                                        <span class="sale-time">@sale.SaleDate.ToString("yyyy-MM-dd HH:mm:ss")</span>
+                                        <span class="user-badge creator" title="المستخدم المضيف">
+                                            <i class="fas fa-user-plus"></i> @sale.UserName
+                                        </span>
+                                    </div>
+                                    <span class="sale-badge badge-deleted">
+                                        <i class="fas fa-trash"></i> محذوفة
+                                    </span>
+                                </div>
+
+                                <div class="sale-details">
+                                    <div class="detail-group">
+                                        <div class="detail-title">المبلغ الكلي</div>
+                                        <div class="detail-value">@sale.TotalAmount.ToString("N2") ج.م</div>
+                                    </div>
+                                    <div class="detail-group">
+                                        <div class="detail-title">المدفوع</div>
+                                        <div class="detail-value">@sale.PaidAmount.ToString("N2") ج.م</div>
+                                    </div>
+                                    <div class="detail-group">
+                                        <div class="detail-title">المتبقي</div>
+                                        <div class="detail-value">@sale.RemainingAmount.ToString("N2") ج.م</div>
+                                    </div>
+                                </div>
+
+                                <div class="action-buttons">
+                                    <a asp-controller="Sales" asp-action="Details" asp-route-id="@sale.Id" class="btn btn-info">
+                                        <i class="fas fa-info-circle"></i> تفاصيل
+                                    </a>
+                                    <button class="btn btn-success" onclick="restoreSale(@sale.Id)">
+                                        <i class="fas fa-undo"></i> استعادة
+                                    </button>
+                                </div>
+                            </div>
+                        }
+                    </div>
+                }
+            }
+        </div>
+    </div>
+
+    <script>
+        // تحديث الوقت كل ثانية
+        function updateDateTime() {
+            const now = new Date();
+            const dateStr = now.toISOString().split('T')[0];
+            const timeStr = now.toLocaleTimeString('ar-EG');
+
+            const dateElement = document.querySelector('#currentDate span');
+            const timeElement = document.querySelector('#currentTime span');
+
+            if (dateElement) dateElement.textContent = dateStr;
+            if (timeElement) timeElement.textContent = timeStr;
+        }
+
+        setInterval(updateDateTime, 1000);
+
+        // استعادة عملية محذوفة
+        function restoreSale(id) {
+            if (confirm('هل أنت متأكد من استعادة هذه العملية؟')) {
+                if (confirm('تأكيد ثاني: سيتم إظهار العملية في التقارير مرة أخرى، هل تريد المتابعة؟')) {
+                    fetch('/Sales/RestoreSale', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ id: id })
+                    })
+                    .then(res => res.json())
+                    .then(data => {
+                        if (data.success) {
+                            alert('تم استعادة العملية بنجاح');
+                            location.reload();
+                        } else {
+                            alert(data.message);
+                        }
+                    });
+                }
+            }
+        }
+
+        // تعديل عملية - التوجيه إلى صفحة نقطة البيع مع معرف العملية
+        function editSale(id, saleNumber) {
+            if (confirm(`هل تريد تعديل العملية ${saleNumber}؟`)) {
+                localStorage.setItem('editSaleId', id);
+                window.location.href = '/Sales/Index';
+            }
+        }
+
+        // التحقق من وجود عملية للتعديل عند تحميل صفحة البيع
+        (function() {
+            const editId = localStorage.getItem('editSaleId');
+            if (editId && window.location.pathname === '/Sales/Index') {
+                console.log('سيتم تحميل العملية رقم: ' + editId);
+            }
+        })();
+
+        // تبديل التبويبات
+        function showTab(tab) {
+            const tabs = document.querySelectorAll('.summary-tab');
+            tabs.forEach(btn => btn.classList.remove('active'));
+            event.target.classList.add('active');
+
+            document.getElementById('activeSales').style.display = 'none';
+
+            const editedSales = document.getElementById('editedSales');
+            const deletedSales = document.getElementById('deletedSales');
+
+            if (editedSales) editedSales.style.display = 'none';
+            if (deletedSales) deletedSales.style.display = 'none';
+
+            if (tab === 'active') {
+                document.getElementById('activeSales').style.display = 'flex';
+            } else if (tab === 'edited' && editedSales) {
+                editedSales.style.display = 'flex';
+            } else if (tab === 'deleted' && deletedSales) {
+                deletedSales.style.display = 'flex';
+            }
+        }
+    </script>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

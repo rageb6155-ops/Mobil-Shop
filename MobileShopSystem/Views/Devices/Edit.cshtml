@@ -1,0 +1,39 @@
+﻿@model MobileShopSystem.Models.Device
+@{
+    ViewData["Title"] = "تعديل الجهاز";
+}
+
+<h2>✏️ تعديل الجهاز</h2>
+
+<div class="card p-3 mb-4 shadow-sm">
+    <form method="post" asp-action="Edit">
+        <input type="hidden" asp-for="Id" />
+
+        <div class="mb-2 row">
+            <div class="col"><input asp-for="Name" class="form-control" placeholder="اسم الجهاز" /></div>
+            <div class="col"><input asp-for="Serial" class="form-control" placeholder="السيريال" /></div>
+        </div>
+
+        <div class="mb-2 row">
+            <div class="col"><input asp-for="Storage" class="form-control" placeholder="السعة (GB)" /></div>
+            <div class="col"><input asp-for="RAM" class="form-control" placeholder="الرام (GB)" /></div>
+        </div>
+
+        <div class="mb-2 row">
+            <div class="col"><input asp-for="PurchasePrice" class="form-control" placeholder="سعر الشراء" step="0.01" /></div>
+            <div class="col"><input asp-for="SalePrice" class="form-control" placeholder="سعر البيع" step="0.01" /></div>
+        </div>
+
+        <div class="mb-2 row">
+            <div class="col"><input asp-for="OwnerType" class="form-control" placeholder="نوع المالك" /></div>
+            <div class="col"><input asp-for="OwnerName" class="form-control" placeholder="اسم المالك" /></div>
+        </div>
+
+        <div class="mb-2 row">
+            <div class="col"><input asp-for="OwnerPhone" class="form-control" placeholder="رقم الهاتف" /></div>
+            <div class="col"><input asp-for="OwnerID" class="form-control" placeholder="رقم الهوية" /></div>
+        </div>
+
+        <button type="submit" class="btn btn-primary">💾 حفظ التعديلات</button>
+    </form>
+</div>

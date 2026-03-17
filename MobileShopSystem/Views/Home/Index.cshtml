@@ -1,0 +1,381 @@
+﻿@using Microsoft.AspNetCore.Http
+
+@{
+    ViewData["Title"] = "الرئيسية";
+    var username = Context.Session.GetString("Username");
+    var isAdmin = Context.Session.GetString("IsAdmin") == "True";
+}
+
+<style>
+    :root {
+        --bg-light: #f4f6f9;
+        --bg-dark: #1e1f26;
+        --card-light: #ffffff;
+        --card-dark: #2a2c36;
+        --text-light: #222;
+        --text-dark: #f1f1f1;
+    }
+
+    body {
+        background: var(--bg-light);
+        font-family: 'Segoe UI', Tahoma, sans-serif;
+        margin: 0;
+        padding: 0;
+        transition: .3s;
+    }
+
+        body.dark {
+            background: var(--bg-dark);
+            color: var(--text-dark);
+        }
+
+    .container {
+        max-width: 1200px;
+        margin: 60px auto;
+    }
+
+    .dashboard {
+        background: var(--card-light);
+        padding: 40px;
+        border-radius: 18px;
+        box-shadow: 0 15px 40px rgba(0,0,0,.08);
+        animation: fadeIn .6s ease-in-out;
+    }
+
+    body.dark .dashboard {
+        background: var(--card-dark);
+    }
+
+    @@keyframes fadeIn {
+        from {
+            opacity: 0;
+            transform: translateY(20px);
+        }
+
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+
+    .top-bar {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 35px;
+        border-bottom: 1px solid #eee;
+        padding-bottom: 15px;
+    }
+
+    body.dark .top-bar {
+        border-color: #444;
+    }
+
+    .welcome h2 {
+        margin: 0;
+        font-size: 26px;
+    }
+
+    .welcome p {
+        font-size: 14px;
+        opacity: .8;
+    }
+
+    .date {
+        font-size: 14px;
+        opacity: .8;
+    }
+
+    .stats {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+        gap: 25px;
+        margin-bottom: 40px;
+    }
+
+    .card {
+        padding: 28px;
+        border-radius: 16px;
+        text-align: center;
+        color: #fff;
+        text-decoration: none;
+        transition: .3s;
+        box-shadow: 0 8px 25px rgba(0,0,0,.15);
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        min-height: 150px;
+    }
+
+        .card:hover {
+            transform: translateY(-8px);
+            box-shadow: 0 18px 40px rgba(0,0,0,.25);
+        }
+
+        .card i {
+            font-size: 40px;
+            margin-bottom: 15px;
+        }
+
+        .card h3 {
+            margin: 0;
+            font-size: 18px;
+            font-weight: 600;
+        }
+
+        .card p {
+            margin: 5px 0 0 0;
+            font-size: 12px;
+            opacity: 0.9;
+        }
+
+    /* ألوان الأزرار */
+    .card-pos {
+        background: linear-gradient(135deg, #4361ee, #3f37c9);
+    }
+
+    .card-quickcodes {
+        background: linear-gradient(135deg, #6f42c1, #5e35b1);
+    }
+
+    .card-products {
+        background: linear-gradient(135deg, #43cea2, #185a9d);
+    }
+
+    .card-devices-inquiry {
+        background: linear-gradient(135deg, #834d9b, #d04ed6);
+    }
+
+    .card-customers {
+        background: linear-gradient(135deg, #fa709a, #fee140);
+    }
+
+    .card-employees {
+        background: linear-gradient(135deg, #9b59b6, #8e44ad);
+    }
+
+    .card-sales-reports {
+        background: linear-gradient(135deg, #17a2b8, #138496);
+    }
+
+    .card-products-manage {
+        background: linear-gradient(135deg, #8e2de2, #4a00e0);
+    }
+
+    .card-settings {
+        background: linear-gradient(135deg, #f39c12, #d35400);
+    }
+
+    .card-closing-manage {
+        background: linear-gradient(135deg, #ff416c, #ff4b2b);
+    }
+
+    .card-devices-manage {
+        background: linear-gradient(135deg, #00c6ff, #0072ff);
+    }
+
+    .card-closing-view {
+        background: linear-gradient(135deg, #11998e, #38ef7d);
+    }
+
+    .card-products-view {
+        background: linear-gradient(135deg, #9b59b6, #8e44ad);
+    }
+
+    .card-daily-closing {
+        background: linear-gradient(135deg, #e74c3c, #c0392b);
+    }
+
+    /* زر الواتساب الجديد */
+    .card-whatsapp {
+        background: linear-gradient(135deg, #25D366, #128C7E);
+    }
+
+    .control-zone {
+        text-align: center;
+    }
+
+    .toggle-mode {
+        margin-bottom: 15px;
+        cursor: pointer;
+        padding: 10px 20px;
+        border-radius: 20px;
+        border: none;
+        background: #555;
+        color: #fff;
+    }
+
+    .logout {
+        background: #e74c3c;
+        padding: 12px 25px;
+        border: none;
+        border-radius: 10px;
+        color: #fff;
+        cursor: pointer;
+        transition: .3s;
+    }
+
+        .logout:hover {
+            transform: translateY(-3px);
+            opacity: .9;
+        }
+
+    /* عنوان القسم */
+    .section-title {
+        grid-column: 1 / -1;
+        text-align: right;
+        margin: 20px 0 10px 0;
+        font-size: 20px;
+        font-weight: 600;
+        color: #4361ee;
+        border-bottom: 2px solid #4361ee;
+        padding-bottom: 10px;
+    }
+
+    body.dark .section-title {
+        color: #fa709a;
+        border-bottom-color: #fa709a;
+    }
+</style>
+
+<div class="container">
+    <div class="dashboard">
+
+        <div class="top-bar">
+            <div class="welcome">
+                <h2>👋 مرحبًا، @username</h2>
+                <p>لوحة تحكم – Mobile Shop System</p>
+            </div>
+            <div class="date">
+                🕒 @DateTime.Now.ToString("dddd, dd MMM yyyy HH:mm")
+            </div>
+        </div>
+
+        <div class="stats">
+
+            <!-- ===== الأزرار الأساسية للجميع ===== -->
+            <a href="/Sales/Index" class="card card-pos">
+                <i class="fas fa-cash-register"></i>
+                <h3>💰 نقطة البيع</h3>
+                <p>إتمام عمليات البيع</p>
+            </a>
+
+            <a href="/QuickCodes/Index" class="card card-quickcodes">
+                <i class="fas fa-qrcode"></i>
+                <h3>⚡ الأكواد السريعة</h3>
+                <p>إدارة الأكواد المختصرة</p>
+            </a>
+
+            <a href="/Products/ViewAll" class="card card-products">
+                <i class="fas fa-boxes"></i>
+                <h3>📦 عرض المنتجات</h3>
+                <p>عرض المنتجات المتاحة</p>
+            </a>
+
+            <a href="/Devices/Inquiry" class="card card-devices-inquiry">
+                <i class="fas fa-search"></i>
+                <h3>🔍 استعلام الأجهزة</h3>
+                <p>البحث عن الأجهزة</p>
+            </a>
+
+            <a href="/Customers/Index" class="card card-customers">
+                <i class="fas fa-users"></i>
+                <h3>👥 العملاء والديون</h3>
+                <p>إدارة حسابات العملاء</p>
+            </a>
+
+            <!-- ===== زر الواتساب الجديد - للصيانة ===== -->
+            <a href="/Repair/Index" class="card card-whatsapp">
+                <i class="fab fa-whatsapp"></i>
+                <h3>📱 أجهزة الصيانة</h3>
+                <p>إدارة ومتابعة الصيانة</p>
+            </a>
+
+            @if (isAdmin)
+            {
+                <!-- ===== زر إدارة الموظفين - يظهر للمشرف فقط ===== -->
+                <a href="/Employees/Index" class="card card-employees">
+                    <i class="fas fa-users-cog"></i>
+                    <h3>👔 إدارة الموظفين</h3>
+                    <p>الرواتب - المكافآت - الخصومات</p>
+                </a>
+
+                <!-- ===== أزرار المشرف فقط ===== -->
+                <div class="section-title">⚙️ إدارة النظام</div>
+
+                <a href="/Sales/DailyReports" class="card card-sales-reports">
+                    <i class="fas fa-chart-line"></i>
+                    <h3>📊 تقارير المبيعات</h3>
+                    <p>عرض وتحليل المبيعات</p>
+                </a>
+
+                <a href="/Products/Index" class="card card-products-manage">
+                    <i class="fas fa-edit"></i>
+                    <h3>📦 إدارة المنتجات</h3>
+                    <p>إضافة وتعديل المنتجات</p>
+                </a>
+
+                <a href="/Settings/Index" class="card card-settings">
+                    <i class="fas fa-cog"></i>
+                    <h3>⚙️ الإعدادات</h3>
+                    <p>إعدادات النظام</p>
+                </a>
+
+                <a href="/DailyClosing/Index" class="card card-closing-manage">
+                    <i class="fas fa-calculator"></i>
+                    <h3>📊 إدارة تقفيل الحساب</h3>
+                    <p>تقفيل الحساب اليومي</p>
+                </a>
+
+                <a href="/Devices/Index" class="card card-devices-manage">
+                    <i class="fas fa-mobile-alt"></i>
+                    <h3>📱 إدارة الأجهزة</h3>
+                    <p>إضافة وتعديل الأجهزة</p>
+                </a>
+
+                <a href="/DailyClosing/Today" class="card card-closing-view">
+                    <i class="fas fa-calendar-check"></i>
+                    <h3>📅 عرض تقفيل اليوم</h3>
+                    <p>عرض تقفيل اليوم الحالي</p>
+                </a>
+            }
+            else
+            {
+                <!-- ===== أزرار إضافية للمستخدمين العاديين ===== -->
+                <a href="/DailyClosing/Today" class="card card-closing-view">
+                    <i class="fas fa-calendar-check"></i>
+                    <h3>📅 عرض تقفيل اليوم</h3>
+                    <p>عرض تقفيل اليوم الحالي</p>
+                </a>
+            }
+
+        </div>
+
+        <div class="control-zone">
+            <br /><br />
+            <button class="logout" onclick="confirmLogout()">🚪 تسجيل الخروج</button>
+        </div>
+
+    </div>
+</div>
+
+<script>
+    function confirmLogout(){
+        if(confirm("هل أنت متأكد من تسجيل الخروج؟")){
+            window.location.href="/Account/Logout";
+        }
+    }
+
+    function toggleMode(){
+        document.body.classList.toggle("dark");
+        localStorage.setItem("mode",
+            document.body.classList.contains("dark") ? "dark" : "light");
+    }
+
+    window.onload = function(){
+        if(localStorage.getItem("mode")==="dark"){
+            document.body.classList.add("dark");
+        }
+    }
+</script>

@@ -1,0 +1,597 @@
+﻿@model MobileShopSystem.Models.Product
+@{
+    ViewData["Title"] = "تفاصيل المنتج";
+    var username = Context.Session.GetString("Username");
+}
+
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>@ViewData["Title"]</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" />
+    <!-- إضافة مكتبات PDF -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+ 
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, sans-serif;
+            background: #ffffff;
+            margin: 0;
+            padding: 20px;
+            color: #333;
+        }
+
+        .page-wrapper {
+            max-width: 800px;
+            margin: 0 auto;
+        }
+
+        /* بطاقة العنوان */
+        .header-card {
+            background: white;
+            border-radius: 16px;
+            padding: 20px 25px;
+            margin-bottom: 25px;
+            box-shadow: 0 5px 20px rgba(0,0,0,0.05);
+            border: 1px solid #f0f0f0;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 15px;
+        }
+
+        .header-title h1 {
+            margin: 0;
+            font-size: 26px;
+            font-weight: 600;
+            color: #27ae60;
+        }
+
+        .header-title p {
+            margin: 5px 0 0;
+            color: #6c757d;
+            font-size: 14px;
+        }
+
+        .user-info {
+            background: #f8f9fa;
+            color: #27ae60;
+            padding: 8px 20px;
+            border-radius: 50px;
+            font-size: 14px;
+            font-weight: 500;
+            border: 1px solid #e9ecef;
+        }
+
+            .user-info i {
+                margin-left: 8px;
+            }
+
+        /* بطاقة التفاصيل */
+        .details-card {
+            background: white;
+            border-radius: 16px;
+            padding: 25px;
+            box-shadow: 0 5px 20px rgba(0,0,0,0.05);
+            border: 1px solid #f0f0f0;
+            margin-bottom: 25px;
+        }
+
+        .details-title {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 20px;
+            color: #27ae60;
+            font-weight: 600;
+            font-size: 22px;
+            padding-bottom: 10px;
+            border-bottom: 2px solid #f0f0f0;
+        }
+
+            .details-title i {
+                font-size: 24px;
+            }
+
+        /* شبكة المعلومات */
+        .info-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+
+        .info-item {
+            background: #f8f9fa;
+            padding: 15px;
+            border-radius: 10px;
+            border-right: 3px solid #27ae60;
+        }
+
+        .info-label {
+            font-size: 12px;
+            color: #6c757d;
+            margin-bottom: 5px;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+
+            .info-label i {
+                color: #27ae60;
+                width: 20px;
+            }
+
+        .info-value {
+            font-size: 16px;
+            font-weight: 600;
+            color: #333;
+            padding-right: 25px;
+        }
+
+        /* صف المعلومات */
+        .info-row {
+            display: flex;
+            padding: 12px 0;
+            border-bottom: 1px dashed #f0f0f0;
+        }
+
+            .info-row:last-child {
+                border-bottom: none;
+            }
+
+        .info-row-label {
+            width: 150px;
+            color: #27ae60;
+            font-weight: 600;
+        }
+
+        .info-row-value {
+            flex: 1;
+            color: #333;
+        }
+
+        /* الأزرار */
+        .btn {
+            padding: 10px 20px;
+            border-radius: 8px;
+            color: #fff;
+            text-decoration: none;
+            font-size: 14px;
+            font-weight: 500;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            transition: all 0.3s;
+            border: none;
+            cursor: pointer;
+            margin: 3px;
+        }
+
+            .btn:hover {
+                transform: translateY(-2px);
+                box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+            }
+
+        .btn-secondary {
+            background: #6c757d;
+        }
+
+            .btn-secondary:hover {
+                background: #5a6268;
+            }
+
+        .btn-primary {
+            background: #3498db;
+        }
+
+            .btn-primary:hover {
+                background: #2980b9;
+            }
+
+        .btn-success {
+            background: #27ae60;
+        }
+
+            .btn-success:hover {
+                background: #219a52;
+            }
+
+        .action-buttons {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+            margin-top: 25px;
+            padding-top: 20px;
+            border-top: 2px solid #f0f0f0;
+        }
+
+        /* باركود */
+        .barcode-section {
+            background: #f8f9fa;
+            padding: 15px;
+            border-radius: 10px;
+            margin: 20px 0;
+            text-align: center;
+        }
+
+        /* أنماط الفاتورة - مستوردة من فاتورة تقفيل الحساب */
+        .invoice-container {
+            width: 80mm;
+            max-width: 80mm;
+            margin: 0 auto;
+            background: #fff;
+            border-radius: 8px;
+            padding: 8px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            font-size: 10px;
+            line-height: 1.3;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, sans-serif;
+        }
+
+        .invoice-header {
+            text-align: center;
+            border-bottom: 1px dashed #27ae60;
+            padding-bottom: 8px;
+            margin-bottom: 8px;
+        }
+
+        .shop-name {
+            font-size: 16px;
+            font-weight: bold;
+            color: #27ae60;
+            margin: 0;
+        }
+
+        .shop-details {
+            color: #7f8c8d;
+            font-size: 8px;
+            margin-top: 3px;
+        }
+
+        .invoice-title {
+            background: #27ae60;
+            color: white;
+            padding: 4px;
+            font-size: 11px;
+            border-radius: 4px;
+            margin-top: 6px;
+            font-weight: bold;
+        }
+
+        .info-grid-invoice {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 4px;
+            margin-bottom: 8px;
+        }
+
+        .info-item-invoice {
+            background: #f8f9fa;
+            padding: 4px;
+            border-radius: 4px;
+        }
+
+        .info-label-invoice {
+            font-size: 7px;
+            color: #7f8c8d;
+            display: block;
+        }
+
+        .info-value-invoice {
+            font-size: 9px;
+            font-weight: bold;
+            color: #2c3e50;
+            display: block;
+        }
+
+        .product-details {
+            margin: 10px 0;
+        }
+
+        .product-row {
+            display: flex;
+            justify-content: space-between;
+            padding: 4px 0;
+            border-bottom: 1px dashed #eee;
+            font-size: 9px;
+        }
+
+        .product-label {
+            color: #27ae60;
+            font-weight: bold;
+        }
+
+        .product-value {
+            color: #333;
+        }
+
+        .price-box {
+            background: #e8f5e8;
+            color: #27ae60;
+            font-weight: bold;
+            font-size: 14px;
+            text-align: center;
+            padding: 8px;
+            border-radius: 6px;
+            margin: 10px 0;
+        }
+
+        .footer-invoice {
+            margin-top: 8px;
+            font-size: 6px;
+            color: #777;
+            text-align: center;
+            border-top: 1px solid #eee;
+            padding-top: 4px;
+        }
+
+        .dashed-line {
+            border-top: 1px dashed #ccc;
+            margin: 6px 0;
+        }
+    </style>
+</head>
+<body>
+    <div class="page-wrapper">
+
+        <!-- بطاقة العنوان -->
+        <div class="header-card">
+            <div class="header-title">
+                <h1>
+                    <i class="fas fa-file-invoice"></i> تفاصيل المنتج
+                </h1>
+                <p>عرض كامل لبيانات المنتج</p>
+            </div>
+            <div class="user-info">
+                <i class="fas fa-user-circle"></i>
+                @username
+            </div>
+        </div>
+
+        <!-- بطاقة التفاصيل -->
+        <div class="details-card">
+            <div class="details-title">
+                <i class="fas fa-box-open"></i>
+                <span>معلومات المنتج</span>
+            </div>
+
+            <!-- المعلومات الأساسية -->
+            <div class="info-grid">
+                <div class="info-item">
+                    <div class="info-label">
+                        <i class="fas fa-tag"></i> اسم المنتج
+                    </div>
+                    <div class="info-value">@Model.Name</div>
+                </div>
+                <div class="info-item">
+                    <div class="info-label">
+                        <i class="fas fa-barcode"></i> الكود المختصر
+                    </div>
+                    <div class="info-value">@Model.ShortCode</div>
+                </div>
+                <div class="info-item">
+                    <div class="info-label">
+                        <i class="fas fa-qrcode"></i> السيريال
+                    </div>
+                    <div class="info-value">@Model.SerialNumber</div>
+                </div>
+                <div class="info-item">
+                    <div class="info-label">
+                        <i class="fas fa-dollar-sign"></i> سعر المصنع
+                    </div>
+                    <div class="info-value">@Model.FactoryPrice.ToString("N0") ج.م</div>
+                </div>
+                <div class="info-item">
+                    <div class="info-label">
+                        <i class="fas fa-coins"></i> سعر البيع
+                    </div>
+                    <div class="info-value">@Model.SalePrice.ToString("N0") ج.م</div>
+                </div>
+                <div class="info-item">
+                    <div class="info-label">
+                        <i class="fas fa-store"></i> مكان الشراء
+                    </div>
+                    <div class="info-value">@(Model.PurchasePlace ?? "---")</div>
+                </div>
+                <div class="info-item">
+                    <div class="info-label">
+                        <i class="fas fa-warehouse"></i> مكان التخزين
+                    </div>
+                    <div class="info-value">@(Model.StoragePlace ?? "---")</div>
+                </div>
+                <div class="info-item">
+                    <div class="info-label">
+                        <i class="fas fa-cubes"></i> الكمية
+                    </div>
+                    <div class="info-value">@Model.Quantity</div>
+                </div>
+            </div>
+
+            <!-- التواريخ -->
+            <div class="info-row">
+                <div class="info-row-label">📅 تاريخ الإضافة</div>
+                <div class="info-row-value">@Model.CreatedAt.ToString("yyyy-MM-dd HH:mm:ss")</div>
+            </div>
+            <div class="info-row">
+                <div class="info-row-label">✏️ تاريخ التعديل</div>
+                <div class="info-row-value">@(Model.UpdatedAt.HasValue? Model.UpdatedAt.Value.ToString("yyyy-MM-dd HH:mm:ss") : "---")</div>
+            </div>
+            <div class="info-row">
+                <div class="info-row-label">👤 تمت الإضافة بواسطة</div>
+                <div class="info-row-value">@Model.AddedByUser?.Username</div>
+            </div>
+
+            <!-- قسم الباركود -->
+            <div class="barcode-section">
+                <i class="fas fa-qrcode" style="font-size: 24px; color: #27ae60; margin-bottom: 10px;"></i>
+                <div style="font-size: 14px; margin-bottom: 10px;">@Model.SerialNumber</div>
+                <div style="font-family: 'Courier New', monospace; font-size: 12px; color: #666;">
+                    [ @Model.ShortCode ]
+                </div>
+            </div>
+
+            <!-- أزرار الإجراءات -->
+            <div class="action-buttons">
+                <a href="/Products/Index" class="btn btn-secondary">
+                    <i class="fas fa-arrow-right"></i> العودة
+                </a>
+                <button class="btn btn-success" onclick="printProductToPDF()">
+                    <i class="fas fa-file-pdf"></i> طباعة PDF
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        function printProductToPDF() {
+            // بيانات المنتج
+            const product = {
+                name: '@Model.Name',
+                shortCode: '@Model.ShortCode',
+                serial: '@Model.SerialNumber',
+                factoryPrice: @Model.FactoryPrice,
+                salePrice: @Model.SalePrice,
+                purchasePlace: '@(Model.PurchasePlace ?? "---")',
+                storagePlace: '@(Model.StoragePlace ?? "---")',
+                quantity: @Model.Quantity,
+                createdAt: '@Model.CreatedAt.ToString("yyyy-MM-dd HH:mm:ss")',
+                updatedAt: '@(Model.UpdatedAt.HasValue? Model.UpdatedAt.Value.ToString("yyyy-MM-dd HH:mm:ss") : "---")',
+                addedBy: '@(Model.AddedByUser?.Username ?? "---")'
+            };
+
+            // إنشاء عنصر مؤقت للفاتورة بنفس شكل فاتورة تقفيل الحساب
+            const printContainer = document.createElement('div');
+            printContainer.className = 'invoice-container';
+            printContainer.style.width = '80mm';
+            printContainer.style.padding = '8px';
+            printContainer.style.fontFamily = 'Segoe UI, Tahoma, sans-serif';
+            printContainer.style.background = 'white';
+            printContainer.style.direction = 'rtl';
+            printContainer.style.margin = '0 auto';
+
+            printContainer.innerHTML = `
+                <!-- رأس الفاتورة بنفس تصميم فاتورة تقفيل الحساب -->
+                <div class="invoice-header" style="text-align: center; border-bottom: 1px dashed #27ae60; padding-bottom: 8px; margin-bottom: 8px;">
+                    <h1 style="font-size: 16px; font-weight: bold; color: #27ae60; margin: 0;">Mobile📱Shop</h1>
+                    <div style="color: #7f8c8d; font-size: 8px; margin-top: 3px;">01064211484</div>
+                    <div style="background: #27ae60; color: white; padding: 4px; font-size: 11px; border-radius: 4px; margin-top: 6px; font-weight: bold;">
+                        Product Invoice
+                    </div>
+                </div>
+
+                <!-- معلومات الفاتورة بنفس تصميم grid -->
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 4px; margin-bottom: 8px;">
+                    <div style="background: #f8f9fa; padding: 4px; border-radius: 4px;">
+                        <span style="font-size: 7px; color: #7f8c8d; display: block;">رقم المنتج</span>
+                        <span style="font-size: 9px; font-weight: bold; color: #2c3e50; display: block;">${product.shortCode}</span>
+                    </div>
+                    <div style="background: #f8f9fa; padding: 4px; border-radius: 4px;">
+                        <span style="font-size: 7px; color: #7f8c8d; display: block;">التاريخ</span>
+                        <span style="font-size: 9px; font-weight: bold; color: #2c3e50; display: block;">${new Date().toLocaleDateString('ar-EG')}</span>
+                    </div>
+                    <div style="background: #f8f9fa; padding: 4px; border-radius: 4px;">
+                        <span style="font-size: 7px; color: #7f8c8d; display: block;">الساعة</span>
+                        <span style="font-size: 9px; font-weight: bold; color: #2c3e50; display: block;">${new Date().toLocaleTimeString('ar-EG')}</span>
+                    </div>
+                    <div style="background: #f8f9fa; padding: 4px; border-radius: 4px;">
+                        <span style="font-size: 7px; color: #7f8c8d; display: block;">تمت الطباعة بواسطة</span>
+                        <span style="font-size: 9px; font-weight: bold; color: #2c3e50; display: block;">@username</span>
+                    </div>
+                </div>
+
+                <!-- خط منقط -->
+                <div style="border-top: 1px dashed #ccc; margin: 6px 0;"></div>
+
+                <!-- تفاصيل المنتج -->
+                <div style="margin: 10px 0;">
+                    <div style="background: #27ae60; color: white; padding: 6px; border-radius: 4px; text-align: center; font-size: 11px; font-weight: bold; margin-bottom: 8px;">
+                        ${product.name}
+                    </div>
+
+                    <div style="display: flex; justify-content: space-between; padding: 4px 0; border-bottom: 1px dashed #eee; font-size: 9px;">
+                        <span style="color: #27ae60; font-weight: bold;">🔑 السيريال:</span>
+                        <span style="color: #333;">${product.serial}</span>
+                    </div>
+                    <div style="display: flex; justify-content: space-between; padding: 4px 0; border-bottom: 1px dashed #eee; font-size: 9px;">
+                        <span style="color: #27ae60; font-weight: bold;">🏭 سعر المصنع:</span>
+                        <span style="color: #333;">${product.factoryPrice.toLocaleString()} ج.م</span>
+                    </div>
+                    <div style="display: flex; justify-content: space-between; padding: 4px 0; border-bottom: 1px dashed #eee; font-size: 9px;">
+                        <span style="color: #27ae60; font-weight: bold;">💰 سعر البيع:</span>
+                        <span style="color: #27ae60; font-weight: bold;">${product.salePrice.toLocaleString()} ج.م</span>
+                    </div>
+                    <div style="display: flex; justify-content: space-between; padding: 4px 0; border-bottom: 1px dashed #eee; font-size: 9px;">
+                        <span style="color: #27ae60; font-weight: bold;">🏪 مكان الشراء:</span>
+                        <span style="color: #333;">${product.purchasePlace}</span>
+                    </div>
+                    <div style="display: flex; justify-content: space-between; padding: 4px 0; border-bottom: 1px dashed #eee; font-size: 9px;">
+                        <span style="color: #27ae60; font-weight: bold;">📦 مكان التخزين:</span>
+                        <span style="color: #333;">${product.storagePlace}</span>
+                    </div>
+                    <div style="display: flex; justify-content: space-between; padding: 4px 0; border-bottom: 1px dashed #eee; font-size: 9px;">
+                        <span style="color: #27ae60; font-weight: bold;">📊 الكمية:</span>
+                        <span style="color: #333;">${product.quantity}</span>
+                    </div>
+                </div>
+
+                <!-- سعر البيع بشكل بارز مثل totals-box -->
+                <div style="background: linear-gradient(135deg, #27ae60, #219a52); color: white; border-radius: 6px; padding: 8px; margin: 8px 0;">
+                    <div style="display: flex; justify-content: space-between; font-size: 12px; font-weight: bold;">
+                        <span>💰 الإجمالي</span>
+                        <span>${product.salePrice.toLocaleString()} ج.م</span>
+                    </div>
+                </div>
+
+                <!-- خط منقط -->
+                <div style="border-top: 1px dashed #ccc; margin: 6px 0;"></div>
+
+                <!-- باركود ورقم المنتج -->
+                <div style="text-align: center; margin: 8px 0; font-family: monospace; font-size: 12px;">
+                    ${product.serial}
+                </div>
+
+                <!-- الفوتر بنفس التصميم -->
+                <div style="margin-top: 8px; font-size: 6px; color: #777; text-align: center; border-top: 1px solid #eee; padding-top: 4px;">
+                    <div>Mobile📱Shop - ${new Date().toLocaleDateString('ar-EG')}</div>
+                    <div>شكراً لتعاملكم معنا ✨</div>
+                </div>
+            `;
+
+            document.body.appendChild(printContainer);
+
+            // تحويل إلى PDF
+            html2canvas(printContainer, {
+                scale: 2,
+                backgroundColor: '#ffffff'
+            }).then(canvas => {
+                const { jsPDF } = window.jspdf;
+
+                const imgWidth = 80; // mm
+                const imgHeight = (canvas.height * imgWidth) / canvas.width;
+
+                const pdf = new jsPDF({
+                    orientation: 'portrait',
+                    unit: 'mm',
+                    format: [imgWidth, imgHeight]
+                });
+
+                const imgData = canvas.toDataURL('image/png');
+                pdf.addImage(imgData, 'PNG', 0, 0, imgWidth, imgHeight, undefined, 'FAST');
+
+                pdf.save(`منتج_${product.shortCode}.pdf`);
+
+                document.body.removeChild(printContainer);
+            });
+        }
+    </script>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

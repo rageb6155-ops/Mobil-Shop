@@ -1,0 +1,71 @@
+﻿@model MobileShopSystem.Models.Device
+@{
+    ViewData["Title"] = "طباعة الجهاز";
+}
+
+<style>
+    body {
+        font-family: 'Segoe UI', Tahoma, sans-serif;
+        padding: 20px;
+    }
+
+    .print-container {
+        width: 300px;
+        margin: auto;
+        border: 1px solid #000;
+        padding: 15px;
+    }
+
+    h2 {
+        text-align: center;
+        margin-bottom: 15px;
+    }
+
+    table {
+        width: 100%;
+        border-collapse: collapse;
+    }
+
+    th, td {
+        text-align: left;
+        padding: 5px;
+        border-bottom: 1px dashed #000;
+    }
+
+    .footer {
+        text-align: center;
+        margin-top: 15px;
+        font-size: 12px;
+    }
+
+    button {
+        margin-top: 15px;
+        width: 100%;
+        padding: 8px;
+        font-size: 14px;
+    }
+</style>
+
+<div class="print-container">
+    <h2>بيانات الجهاز</h2>
+    <table>
+        <tr><th>اسم الجهاز:</th><td>@Model.Name</td></tr>
+        <tr><th>Serial:</th><td>@Model.Serial</td></tr>
+        <tr><th>سعة التخزين:</th><td>@Model.Storage</td></tr>
+        <tr><th>الرام:</th><td>@Model.RAM</td></tr>
+        <tr><th>سعر الشراء:</th><td>@Model.PurchasePrice</td></tr>
+        <tr><th>سعر البيع:</th><td>@Model.SalePrice</td></tr>
+        <tr><th>نوع المالك:</th><td>@Model.OwnerType</td></tr>
+        <tr><th>اسم المالك:</th><td>@Model.OwnerName</td></tr>
+        <tr><th>رقم الهاتف:</th><td>@Model.OwnerPhone</td></tr>
+        <tr><th>رقم البطاقة:</th><td>@Model.OwnerID</td></tr>
+        <tr><th>الحالة:</th><td>@Model.Status</td></tr>
+    </table>
+
+    <div class="footer">
+        تم الطباعة في: @DateTime.Now.ToString("yyyy/MM/dd HH:mm")
+    </div>
+
+    <button onclick="window.print()">🖨️ طباعة</button>
+    <a asp-action="Index"><button>عودة للقائمة</button></a>
+</div>

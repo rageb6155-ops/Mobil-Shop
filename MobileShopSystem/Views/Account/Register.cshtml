@@ -1,0 +1,212 @@
+﻿@{
+    ViewData["Title"] = "إنشاء حساب";
+}
+
+<style>
+    body {
+        background: linear-gradient(135deg, #43cea2, #185a9d);
+        font-family: 'Segoe UI', Tahoma;
+    }
+
+    .card {
+        width: 420px;
+        margin: 60px auto;
+        background: #fff;
+        padding: 30px;
+        border-radius: 12px;
+        box-shadow: 0 10px 25px rgba(0,0,0,.2);
+        position: relative;
+        z-index: 1;
+    }
+
+    h2 {
+        text-align: center;
+        margin-bottom: 25px;
+    }
+
+    input {
+        width: 100%;
+        padding: 12px;
+        margin-bottom: 15px;
+        border-radius: 8px;
+        border: 1px solid #ccc;
+        font-size: 14px;
+    }
+
+    button {
+        width: 100%;
+        padding: 12px;
+        border: none;
+        background: #43cea2;
+        color: #fff;
+        font-size: 16px;
+        border-radius: 8px;
+        cursor: pointer;
+    }
+
+        button:disabled {
+            opacity: .7;
+            cursor: not-allowed;
+        }
+
+    .loader {
+        display: none;
+        margin: 15px auto 0;
+        width: 40px;
+        height: 40px;
+        border: 5px solid #eee;
+        border-top: 5px solid #43cea2;
+        border-radius: 50%;
+        animation: spin 1s linear infinite;
+    }
+
+    @@keyframes spin {
+        100% {
+            transform: rotate(360deg);
+        }
+    }
+
+    .error {
+        color: red;
+        text-align: center;
+        margin-bottom: 10px;
+    }
+
+    /* ===== Overlay النجاح ===== */
+    .overlay {
+        position: fixed;
+        inset: 0;
+        background: rgba(0,0,0,.65);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        z-index: 9999;
+    }
+
+    .success-box {
+        background: #fff;
+        padding: 30px 40px;
+        border-radius: 12px;
+        text-align: center;
+        font-size: 18px;
+        color: #2ecc71;
+        box-shadow: 0 10px 30px rgba(0,0,0,.3);
+        animation: fadeIn .3s ease;
+    }
+
+    @@keyframes fadeIn {
+        from {
+            opacity: 0;
+            transform: scale(.9);
+        }
+
+        to {
+            opacity: 1;
+            transform: scale(1);
+        }
+    }
+</style>
+
+<div class="card">
+    <h2>إنشاء حساب</h2>
+
+    @if (ViewBag.Error != null)
+    {
+        <div class="error">@ViewBag.Error</div>
+    }
+
+    <form method="post" onsubmit="return validateForm();">
+
+        <input type="text"
+               name="Username"
+               placeholder="اسم المستخدم"
+               autocomplete="off"
+               autocorrect="off"
+               autocapitalize="off"
+               spellcheck="false"
+               required />
+
+        <input type="password"
+               name="Password"
+               id="password"
+               placeholder="كلمة السر"
+               autocomplete="off"
+               required />
+
+        <input type="password"
+               name="ConfirmPassword"
+               id="confirmPassword"
+               placeholder="إعادة كلمة السر"
+               autocomplete="off"
+               required />
+
+        <input type="text"
+               name="Phone"
+               id="phone"
+               placeholder="رقم الهاتف"
+               autocomplete="off"
+               inputmode="numeric"
+               required />
+
+        <button type="submit" id="btn">إنشاء الحساب</button>
+        <div class="loader" id="loader"></div>
+    </form>
+</div>
+
+@if (ViewBag.Success != null)
+{
+    <div class="overlay" id="successOverlay">
+        <div class="success-box">
+            ✅ تم إنشاء الحساب بنجاح
+            <br /><br />
+            ⏳ في انتظار موافقة المشرف
+            <br /><br />
+            ⏱ سيتم تحويلك تلقائيًا
+        </div>
+    </div>
+}
+
+<script>
+    window.onload = function () {
+
+        const overlay = document.getElementById("successOverlay");
+
+        if (overlay) {
+            document.body.style.overflow = "hidden";
+
+            setTimeout(function () {
+                window.location.href = "/Account/Login";
+            }, 5000);
+
+        } else {
+            document.getElementById("password").value = "";
+            document.getElementById("confirmPassword").value = "";
+            document.getElementById("phone").value = "";
+        }
+    };
+
+    function clean(v) {
+        return v.trim().replace(/\s+/g, '');
+    }
+
+    function validateForm() {
+
+        const pass = clean(document.getElementById("password").value);
+        const confirm = clean(document.getElementById("confirmPassword").value);
+        const phone = clean(document.getElementById("phone").value);
+
+        if (pass !== confirm) {
+            alert("كلمتا السر غير متطابقتين");
+            return false;
+        }
+
+        if (!/^01\d{9}$/.test(phone)) {
+            alert("رقم الهاتف يجب أن يبدأ بـ 01 ويتكون من 11 رقم");
+            return false;
+        }
+
+        document.getElementById("loader").style.display = "block";
+        document.getElementById("btn").disabled = true;
+        return true;
+    }
+</script>
