@@ -1,4 +1,4 @@
-﻿using MobileShopSystem.Data;
+using MobileShopSystem.Data;
 using MobileShopSystem.Services;
 using Microsoft.EntityFrameworkCore;
 
@@ -61,25 +61,19 @@ app.MapControllerRoute(
     name: "default",
     pattern: "{controller=Account}/{action=Login}/{id?}");
 
-// Optional: Test database connection on startup
+// Auto-apply migrations on startup (required for Somee.com deployment)
 try
 {
     using (var scope = app.Services.CreateScope())
     {
         var dbContext = scope.ServiceProvider.GetRequiredService<AppDbContext>();
-        if (dbContext.Database.CanConnect())
-        {
-            Console.WriteLine("✅ Database connection successful!");
-        }
-        else
-        {
-            Console.WriteLine("⚠️ Database connection failed!");
-        }
+        dbContext.Database.Migrate();
+        Console.WriteLine("✅ Database migrations applied successfully!");
     }
 }
 catch (Exception ex)
 {
-    Console.WriteLine($"❌ Database connection error: {ex.Message}");
+    Console.WriteLine($"❌ Database migration error: {ex.Message}");
 }
 app.UseStaticFiles();
 app.Run();

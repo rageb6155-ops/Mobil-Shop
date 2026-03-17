@@ -1,4 +1,4 @@
-﻿using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using MobileShopSystem.Data;
 using MobileShopSystem.Models;
@@ -1437,21 +1437,22 @@ namespace MobileShopSystem.Controllers
                 if (lowStockOnly)
                     query = query.Where(p => p.Quantity <= p.MinQuantity);
 
-                var parts = await query
+                var rawParts = await query
                     .OrderBy(p => p.PartName)
-                    .Select(p => new SparePartViewModel
-                    {
-                        Id = p.Id,
-                        PartCode = p.PartCode,
-                        PartName = p.PartName,
-                        CompatibleModels = JsonSerializer.Deserialize<string[]>(p.CompatibleModels ?? "[]"),
-                        Quantity = p.Quantity,
-                        MinQuantity = p.MinQuantity,
-                        Cost = p.Cost,
-                        SellingPrice = p.SellingPrice,
-                        Supplier = p.Supplier,
-                        Location = p.Location
-                    }).ToListAsync();
+                    .ToListAsync();
+                var parts = rawParts.Select(p => new SparePartViewModel
+                {
+                    Id = p.Id,
+                    PartCode = p.PartCode,
+                    PartName = p.PartName,
+                    CompatibleModels = JsonSerializer.Deserialize<string[]>(p.CompatibleModels ?? "[]"),
+                    Quantity = p.Quantity,
+                    MinQuantity = p.MinQuantity,
+                    Cost = p.Cost,
+                    SellingPrice = p.SellingPrice,
+                    Supplier = p.Supplier,
+                    Location = p.Location
+                }).ToList();
 
                 return Json(new { success = true, parts = parts });
             }

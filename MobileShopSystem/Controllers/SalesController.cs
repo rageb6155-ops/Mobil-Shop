@@ -1,4 +1,4 @@
-﻿using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using MobileShopSystem.Data;
 using MobileShopSystem.Models;
@@ -661,22 +661,22 @@ namespace MobileShopSystem.Controllers
             foreach (var sale in sales)
             {
                 // جلب التعديلات لهذه العملية
-                var modifications = await _context.SaleModificationLogs
+                var rawLogs = await _context.SaleModificationLogs
                     .Where(l => l.SaleId == sale.Id)
                     .OrderByDescending(l => l.ModifiedAt)
-                    .Select(l => new MobileShopSystem.ViewModels.ModificationReportViewModel
-                    {
-                        ModifiedBy = _context.Users.FirstOrDefault(u => u.Id == l.ModifiedBy) != null ?
-                            _context.Users.FirstOrDefault(u => u.Id == l.ModifiedBy)!.Username : "Unknown",
-                        ModifiedAt = l.ModifiedAt,
-                        ModificationType = l.ModificationType,
-                        OldAmount = l.OldTotalAmount,
-                        NewAmount = l.NewTotalAmount,
-                        OldItems = !string.IsNullOrEmpty(l.OldItemsJson) ?
-                            JsonSerializer.Deserialize<List<SaleItemReportViewModel>>(l.OldItemsJson) : new List<SaleItemReportViewModel>(),
-                        NewItems = !string.IsNullOrEmpty(l.NewItemsJson) ?
-                            JsonSerializer.Deserialize<List<SaleItemReportViewModel>>(l.NewItemsJson) : new List<SaleItemReportViewModel>()
-                    }).ToListAsync();
+                    .ToListAsync();
+                var modifications = rawLogs.Select(l => new MobileShopSystem.ViewModels.ModificationReportViewModel
+                {
+                    ModifiedBy = _context.Users.FirstOrDefault(u => u.Id == l.ModifiedBy)?.Username ?? "Unknown",
+                    ModifiedAt = l.ModifiedAt,
+                    ModificationType = l.ModificationType,
+                    OldAmount = l.OldTotalAmount,
+                    NewAmount = l.NewTotalAmount,
+                    OldItems = !string.IsNullOrEmpty(l.OldItemsJson) ?
+                        JsonSerializer.Deserialize<List<SaleItemReportViewModel>>(l.OldItemsJson) : new List<SaleItemReportViewModel>(),
+                    NewItems = !string.IsNullOrEmpty(l.NewItemsJson) ?
+                        JsonSerializer.Deserialize<List<SaleItemReportViewModel>>(l.NewItemsJson) : new List<SaleItemReportViewModel>()
+                }).ToList();
 
                 var reportItem = new MobileShopSystem.ViewModels.SaleReportViewModel
                 {
@@ -829,10 +829,10 @@ namespace MobileShopSystem.Controllers
                 Modifications = _context.SaleModificationLogs
                     .Where(l => l.SaleId == sale.Id)
                     .OrderByDescending(l => l.ModifiedAt)
+                    .AsEnumerable()
                     .Select(l => new MobileShopSystem.ViewModels.ModificationReportViewModel
                     {
-                        ModifiedBy = _context.Users.FirstOrDefault(u => u.Id == l.ModifiedBy) != null ?
-                            _context.Users.FirstOrDefault(u => u.Id == l.ModifiedBy)!.Username : "Unknown",
+                        ModifiedBy = _context.Users.FirstOrDefault(u => u.Id == l.ModifiedBy)?.Username ?? "Unknown",
                         ModifiedAt = l.ModifiedAt,
                         ModificationType = l.ModificationType,
                         OldAmount = l.OldTotalAmount,
