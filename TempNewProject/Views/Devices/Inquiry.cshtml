@@ -1,0 +1,734 @@
+﻿@model IEnumerable<MobileShopSystem.Models.Device>
+
+@{
+    ViewData["Title"] = "استعلام عن الأجهزة";
+    var username = Context.Session.GetString("Username");
+}
+
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>@ViewData["Title"]</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" />
+    <!-- إضافة مكتبات PDF -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, sans-serif;
+            background: #ffffff;
+            margin: 0;
+            padding: 20px;
+            color: #333;
+        }
+
+        .page-wrapper {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        /* بطاقة العنوان */
+        .header-card {
+            background: white;
+            border-radius: 16px;
+            padding: 20px 25px;
+            margin-bottom: 25px;
+            box-shadow: 0 5px 20px rgba(0,0,0,0.05);
+            border: 1px solid #f0f0f0;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 15px;
+        }
+
+        .header-title h1 {
+            margin: 0;
+            font-size: 26px;
+            font-weight: 600;
+            color: #834d9b;
+        }
+
+        .header-title p {
+            margin: 5px 0 0;
+            color: #6c757d;
+            font-size: 14px;
+        }
+
+        .user-info {
+            background: #f8f9fa;
+            color: #834d9b;
+            padding: 8px 20px;
+            border-radius: 50px;
+            font-size: 14px;
+            font-weight: 500;
+            border: 1px solid #e9ecef;
+        }
+
+            .user-info i {
+                margin-left: 8px;
+            }
+
+        /* بطاقة البحث */
+        .search-card {
+            background: white;
+            border-radius: 16px;
+            padding: 20px 25px;
+            margin-bottom: 25px;
+            box-shadow: 0 5px 20px rgba(0,0,0,0.05);
+            border: 1px solid #f0f0f0;
+        }
+
+        .search-label {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 15px;
+            color: #333;
+            font-weight: 500;
+        }
+
+            .search-label i {
+                color: #834d9b;
+                font-size: 20px;
+            }
+
+        .search-wrapper {
+            position: relative;
+            display: flex;
+            align-items: center;
+        }
+
+        .search-icon {
+            position: absolute;
+            right: 15px;
+            color: #adb5bd;
+            font-size: 18px;
+        }
+
+        .clear-search {
+            position: absolute;
+            left: 15px;
+            color: #adb5bd;
+            cursor: pointer;
+            font-size: 18px;
+            transition: color 0.3s;
+            display: none;
+        }
+
+            .clear-search:hover {
+                color: #dc3545;
+            }
+
+        .search-input {
+            width: 100%;
+            padding: 12px 50px;
+            border: 2px solid #e9ecef;
+            border-radius: 50px;
+            font-size: 15px;
+            transition: all 0.3s;
+            background: #f8f9fa;
+        }
+
+            .search-input:focus {
+                outline: none;
+                border-color: #834d9b;
+                background: white;
+                box-shadow: 0 5px 20px rgba(131, 77, 155, 0.1);
+            }
+
+                .search-input:focus + .clear-search {
+                    display: block;
+                }
+
+        .search-stats {
+            margin-top: 10px;
+            font-size: 13px;
+            color: #6c757d;
+            text-align: left;
+        }
+
+        /* بطاقة الأجهزة */
+        .devices-card {
+            background: white;
+            border-radius: 16px;
+            padding: 25px;
+            box-shadow: 0 5px 20px rgba(0,0,0,0.05);
+            border: 1px solid #f0f0f0;
+        }
+
+        .devices-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+            gap: 15px;
+        }
+
+        .devices-title {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+            .devices-title i {
+                color: #834d9b;
+                font-size: 24px;
+            }
+
+            .devices-title h3 {
+                margin: 0;
+                color: #333;
+                font-weight: 600;
+            }
+
+        .badge-count {
+            background: #834d9b;
+            color: white;
+            padding: 5px 15px;
+            border-radius: 50px;
+            font-size: 14px;
+            font-weight: 500;
+        }
+
+        /* أزرار التحديد والطباعة */
+        .selection-message {
+            background: #fff3cd;
+            color: #856404;
+            padding: 10px 15px;
+            border-radius: 8px;
+            font-size: 13px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .btn-pdf {
+            background: #834d9b;
+            color: white;
+            border: none;
+            padding: 8px 20px;
+            border-radius: 8px;
+            font-size: 14px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.3s;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+            .btn-pdf:hover {
+                background: #6a3d7a;
+                transform: translateY(-2px);
+            }
+
+            .btn-pdf:disabled {
+                opacity: 0.5;
+                cursor: not-allowed;
+                transform: none;
+            }
+
+        /* شبكة الأجهزة */
+        .devices-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
+            gap: 20px;
+            margin-top: 20px;
+        }
+
+        .device-card {
+            background: white;
+            border-radius: 15px;
+            padding: 20px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.05);
+            transition: all 0.3s;
+            border: 1px solid #f0f0f0;
+            border-right: 4px solid #834d9b;
+            cursor: pointer;
+        }
+
+            .device-card:hover {
+                transform: translateY(-5px);
+                box-shadow: 0 8px 25px rgba(131, 77, 155, 0.15);
+            }
+
+            .device-card.selected {
+                border: 2px solid #834d9b;
+                background: #f8f0ff;
+                transform: scale(1.02);
+            }
+
+        .device-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+            padding-bottom: 10px;
+            border-bottom: 1px solid #eee;
+        }
+
+        .device-name {
+            font-size: 18px;
+            font-weight: bold;
+            color: #834d9b;
+        }
+
+        .device-serial {
+            background: #834d9b;
+            color: white;
+            padding: 3px 10px;
+            border-radius: 20px;
+            font-size: 12px;
+        }
+
+        .info-row {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 8px;
+            padding: 5px 0;
+            border-bottom: 1px dashed #f0f0f0;
+        }
+
+        .info-label {
+            color: #7f8c8d;
+            font-size: 13px;
+        }
+
+        .info-value {
+            font-weight: bold;
+            color: #2c3e50;
+            font-size: 14px;
+        }
+
+        .price {
+            color: #27ae60;
+            font-size: 16px;
+            font-weight: bold;
+        }
+
+        .last-update {
+            margin-top: 15px;
+            padding-top: 10px;
+            border-top: 2px solid #f0f0f0;
+            font-size: 12px;
+            color: #95a5a6;
+            text-align: left;
+        }
+
+        .status-badge {
+            display: inline-block;
+            padding: 3px 8px;
+            border-radius: 12px;
+            font-size: 11px;
+            font-weight: bold;
+        }
+
+        .status-sale {
+            background: #e8f5e8;
+            color: #27ae60;
+        }
+
+        .status-modified {
+            background: #fff3e0;
+            color: #f39c12;
+        }
+
+        .status-deleted {
+            background: #fbe9e7;
+            color: #e74c3c;
+        }
+
+        .no-results {
+            text-align: center;
+            padding: 60px 20px;
+            background: #f8f9fa;
+            border-radius: 12px;
+            margin: 20px 0;
+        }
+
+            .no-results i {
+                font-size: 60px;
+                color: #dee2e6;
+                margin-bottom: 20px;
+            }
+
+            .no-results h4 {
+                color: #333;
+                margin-bottom: 10px;
+            }
+
+            .no-results p {
+                color: #6c757d;
+                margin: 0;
+            }
+
+        @@media (max-width: 768px) {
+            .header-card {
+                flex-direction: column;
+                text-align: center;
+            }
+
+            .devices-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .devices-header {
+                flex-direction: column;
+                text-align: center;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="page-wrapper">
+
+        <!-- بطاقة العنوان -->
+        <div class="header-card">
+            <div class="header-title">
+                <h1>
+                    <i class="fas fa-mobile-alt"></i> استعلام عن الأجهزة
+                </h1>
+                <p>ابحث وشاهد تفاصيل الأجهزة المتوفرة</p>
+            </div>
+            <div class="user-info">
+                <i class="fas fa-user-circle"></i>
+                @username
+            </div>
+        </div>
+
+        <!-- بطاقة البحث -->
+        <div class="search-card">
+            <div class="search-label">
+                <i class="fas fa-search"></i>
+                <span>ابحث عن جهاز</span>
+            </div>
+            <div class="search-wrapper">
+                <i class="fas fa-search search-icon"></i>
+                <input type="text"
+                       id="searchInput"
+                       class="search-input"
+                       placeholder="ابحث باسم الجهاز أو السيريال..."
+                       autocomplete="off">
+                <i class="fas fa-times-circle clear-search" id="clearSearch" onclick="clearSearch()"></i>
+            </div>
+            <div class="search-stats" id="searchStats">
+                <i class="fas fa-info-circle"></i> إجمالي الأجهزة: @Model.Count()
+            </div>
+        </div>
+
+        <!-- بطاقة الأجهزة -->
+        <div class="devices-card">
+            <div class="devices-header">
+                <div class="devices-title">
+                    <i class="fas fa-list"></i>
+                    <h3>قائمة الأجهزة</h3>
+                </div>
+                <div style="display: flex; gap: 15px; align-items: center;">
+                    <div id="selectionMessage" class="selection-message" style="display: none;">
+                        <i class="fas fa-check-circle"></i>
+                        <span id="selectedDeviceName"></span>
+                    </div>
+                    <button class="btn-pdf" id="printPdfBtn" onclick="printSelectedDevice()" disabled>
+                        <i class="fas fa-file-pdf"></i> طباعة الجهاز
+                    </button>
+                    <span class="badge-count">@Model.Count() جهاز</span>
+                </div>
+            </div>
+
+            <!-- شبكة الأجهزة -->
+            <div id="devicesGrid" class="devices-grid">
+                @foreach (var device in Model)
+                {
+                    <div class="device-card"
+                         data-name="@device.Name"
+                         data-serial="@device.Serial"
+                         data-original-name="@device.OriginalName"
+                         data-original-serial="@device.OriginalSerial"
+                         onclick="selectDevice(this, @device.Id, '@device.Name', '@device.Serial', @device.RAM, @device.Storage, @(device.SalePrice ?? 0))">
+
+                        <!-- رأس البطاقة -->
+                        <div class="device-header">
+                            <span class="device-name">📱 @device.Name</span>
+                        </div>
+
+                        <!-- بيانات الجهاز -->
+                        <div class="info-row">
+                            <span class="info-label">السيريال:</span>
+                            <span class="info-value">@device.Serial</span>
+                        </div>
+
+                        <div class="info-row">
+                            <span class="info-label">الرام:</span>
+                            <span class="info-value">@device.RAM جيجابايت</span>
+                        </div>
+
+                        <div class="info-row">
+                            <span class="info-label">السعة:</span>
+                            <span class="info-value">@device.Storage جيجابايت</span>
+                        </div>
+
+                        <div class="info-row">
+                            <span class="info-label">سعر البيع:</span>
+                            <span class="info-value price">💰 @(device.SalePrice?.ToString("N0") ?? "0") ج.م</span>
+                        </div>
+                    </div>
+                }
+            </div>
+
+            <!-- رسالة عدم وجود نتائج -->
+            <div id="noResults" class="no-results" style="display: none;">
+                <i class="fas fa-frown"></i>
+                <h4>لا توجد نتائج</h4>
+                <p>لم يتم العثور على أجهزة تطابق بحثك</p>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // عناصر الصفحة
+        const searchInput = document.getElementById('searchInput');
+        const clearSearchBtn = document.getElementById('clearSearch');
+        const devicesGrid = document.getElementById('devicesGrid');
+        const noResults = document.getElementById('noResults');
+        const deviceCards = document.querySelectorAll('.device-card');
+        const searchStats = document.getElementById('searchStats');
+
+        // متغيرات التحديد
+        let selectedDeviceId = null;
+        let selectedDeviceData = null;
+        const printPdfBtn = document.getElementById('printPdfBtn');
+        const selectionMessage = document.getElementById('selectionMessage');
+        const selectedDeviceName = document.getElementById('selectedDeviceName');
+
+        // دالة البحث
+        function searchDevices() {
+            const searchTerm = searchInput.value.toLowerCase().trim();
+            let visibleCount = 0;
+
+            deviceCards.forEach(card => {
+                // الحصول على البيانات للبحث
+                const name = card.getAttribute('data-name')?.toLowerCase() || '';
+                const serial = card.getAttribute('data-serial')?.toLowerCase() || '';
+                const originalName = card.getAttribute('data-original-name')?.toLowerCase() || '';
+                const originalSerial = card.getAttribute('data-original-serial')?.toLowerCase() || '';
+
+                // البحث في كل الحقول
+                const matches = name.includes(searchTerm) ||
+                               serial.includes(searchTerm) ||
+                               originalName.includes(searchTerm) ||
+                               originalSerial.includes(searchTerm);
+
+                if (searchTerm === '' || matches) {
+                    card.style.display = 'block';
+                    visibleCount++;
+                } else {
+                    card.style.display = 'none';
+                }
+            });
+
+            // تحديث الإحصائيات
+            searchStats.innerHTML = `<i class="fas fa-info-circle"></i> عرض ${visibleCount} من إجمالي ${deviceCards.length} جهاز`;
+
+            // إظهار/إخفاء زر المسح
+            clearSearchBtn.style.display = searchTerm ? 'block' : 'none';
+
+            // إظهار/إخفاء رسالة عدم وجود نتائج
+            if (visibleCount === 0 && searchTerm) {
+                noResults.style.display = 'block';
+            } else {
+                noResults.style.display = 'none';
+            }
+
+            // إلغاء التحديد إذا اختفى الجهاز المحدد
+            if (selectedDeviceId) {
+                const selectedCard = document.querySelector(`.device-card.selected`);
+                if (!selectedCard || selectedCard.style.display === 'none') {
+                    selectedDeviceId = null;
+                    selectedDeviceData = null;
+                    printPdfBtn.disabled = true;
+                    selectionMessage.style.display = 'none';
+                }
+            }
+        }
+
+        // دالة مسح البحث
+        function clearSearch() {
+            searchInput.value = '';
+            searchDevices();
+            searchInput.focus();
+        }
+
+        // دالة تحديد الجهاز
+        function selectDevice(element, id, name, serial, ram, storage, price) {
+            // إزالة التحديد من جميع البطاقات
+            deviceCards.forEach(card => {
+                card.classList.remove('selected');
+            });
+
+            // تحديد البطاقة الحالية
+            element.classList.add('selected');
+
+            // حفظ بيانات الجهاز المحدد
+            selectedDeviceId = id;
+            selectedDeviceData = {
+                id: id,
+                name: name,
+                serial: serial,
+                ram: ram,
+                storage: storage,
+                price: price
+            };
+
+            // تفعيل زر الطباعة
+            printPdfBtn.disabled = false;
+
+            // إظهار رسالة التحديد
+            selectionMessage.style.display = 'flex';
+            selectedDeviceName.innerText = `تم تحديد: ${name}`;
+        }
+
+        // دالة طباعة الجهاز المحدد
+        function printSelectedDevice() {
+            if (!selectedDeviceData) {
+                alert('الرجاء تحديد جهاز أولاً');
+                return;
+            }
+
+            // إنشاء عنصر مؤقت للفاتورة
+            const printContainer = document.createElement('div');
+            printContainer.style.width = '80mm';
+            printContainer.style.padding = '8px';
+            printContainer.style.fontFamily = 'Segoe UI, Tahoma, sans-serif';
+            printContainer.style.background = 'white';
+            printContainer.style.direction = 'rtl';
+            printContainer.style.margin = '0 auto';
+            printContainer.style.boxSizing = 'border-box';
+            printContainer.innerHTML = `
+                <div style="width: 100%; background: #fff; border-radius: 8px; padding: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.1); font-size: 10px; line-height: 1.3; box-sizing: border-box; text-align: center;">
+                    <!-- رأس الفاتورة -->
+                    <div style="text-align: center; border-bottom: 1px dashed #834d9b; padding-bottom: 8px; margin-bottom: 8px; width: 100%;">
+                        <h1 style="font-size: 16px; font-weight: bold; color: #834d9b; margin: 0;">Mobile📱Shop</h1>
+                        <div style="color: #7f8c8d; font-size: 8px; margin-top: 3px;">01064211484</div>
+                        <div style="background: #834d9b; color: white; padding: 4px; font-size: 11px; border-radius: 4px; margin-top: 6px; font-weight: bold;">
+                            Device Invoice
+                        </div>
+                    </div>
+
+                    <!-- معلومات الفاتورة -->
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 4px; margin-bottom: 8px; width: 100%;">
+                        </div>
+                    </div>
+
+                    <!-- خط منقط -->
+                    <div style="border-top: 1px dashed #ccc; margin: 6px 0; width: 100%;"></div>
+
+                    <!-- إحصائيات سريعة -->
+                    <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 4px; margin: 8px 0; width: 100%;">
+                        <div style="background: #f8f9fa; padding: 4px; border-radius: 4px; text-align: center; border-right: 2px solid #834d9b;">
+                            <div style="font-size: 6px; color: #7f8c8d;">السعة</div>
+                            <div style="font-size: 9px; font-weight: bold; color: #2c3e50;">${selectedDeviceData.storage} GB</div>
+                        </div>
+                        <div style="background: #f8f9fa; padding: 4px; border-radius: 4px; text-align: center; border-right: 2px solid #834d9b;">
+                            <div style="font-size: 6px; color: #7f8c8d;">الرام</div>
+                            <div style="font-size: 9px; font-weight: bold; color: #2c3e50;">${selectedDeviceData.ram} GB</div>
+                        </div>
+                        <div style="background: #f8f9fa; padding: 4px; border-radius: 4px; text-align: center; border-right: 2px solid #834d9b;">
+                            <div style="font-size: 6px; color: #7f8c8d;">السعر</div>
+                            <div style="font-size: 9px; font-weight: bold; color: #27ae60;">${selectedDeviceData.price} LE</div>
+                        </div>
+                    </div>
+
+                    <!-- اسم الجهاز بشكل بارز -->
+                    <div style="background: #834d9b; color: white; padding: 6px; border-radius: 4px; text-align: center; font-size: 11px; font-weight: bold; margin-bottom: 8px; width: 100%;">
+                        ${selectedDeviceData.name}
+                    </div>
+
+                    <!-- تفاصيل الجهاز -->
+                    <div style="margin: 10px 0; width: 100%;">
+                        <div style="display: flex; justify-content: space-between; padding: 4px 0; border-bottom: 1px dashed #eee; font-size: 9px; width: 100%;">
+                            <span style="color: #834d9b; font-weight: bold;">🔑 السيريال:</span>
+                            <span style="color: #333;">${selectedDeviceData.serial}</span>
+                        </div>
+                        <div style="display: flex; justify-content: space-between; padding: 4px 0; border-bottom: 1px dashed #eee; font-size: 9px; width: 100%;">
+                            <span style="color: #834d9b; font-weight: bold;">💾 السعة:</span>
+                            <span style="color: #333;">${selectedDeviceData.storage} GB</span>
+                        </div>
+                        <div style="display: flex; justify-content: space-between; padding: 4px 0; border-bottom: 1px dashed #eee; font-size: 9px; width: 100%;">
+                            <span style="color: #834d9b; font-weight: bold;">⚡ الرام:</span>
+                            <span style="color: #333;">${selectedDeviceData.ram} GB</span>
+                        </div>
+                    </div>
+
+                    <!-- سعر البيع بشكل بارز -->
+                    <div style="background: linear-gradient(135deg, #834d9b, #6a3d7a); color: white; border-radius: 6px; padding: 8px; margin: 8px 0; width: 100%;">
+                        <div style="display: flex; justify-content: space-between; font-size: 12px; font-weight: bold;">
+                            <span>💰 سعر البيع</span>
+                            <span>${selectedDeviceData.price} ج.م</span>
+                        </div>
+                    </div>
+
+                    <!-- خط منقط -->
+                    <div style="border-top: 1px dashed #ccc; margin: 6px 0; width: 100%;"></div>
+
+                    <!-- الفوتر -->
+                    <div style="margin-top: 8px; font-size: 6px; color: #777; text-align: center; border-top: 1px solid #eee; padding-top: 4px; width: 100%;">
+                        <div>Mobile📱Shop - ${new Date().toLocaleDateString('ar-EG')}</div>
+                        <div>شكراً لتعاملكم معنا ✨</div>
+                    </div>
+                </div>
+            `;
+
+            document.body.appendChild(printContainer);
+
+            // تحويل إلى PDF
+            html2canvas(printContainer, {
+                scale: 2,
+                backgroundColor: '#ffffff',
+                windowWidth: printContainer.scrollWidth,
+                windowHeight: printContainer.scrollHeight
+            }).then(canvas => {
+                const { jsPDF } = window.jspdf;
+
+                const imgWidth = 80; // mm
+                const imgHeight = (canvas.height * imgWidth) / canvas.width;
+
+                const pdf = new jsPDF({
+                    orientation: 'portrait',
+                    unit: 'mm',
+                    format: [imgWidth, imgHeight]
+                });
+
+                const imgData = canvas.toDataURL('image/png');
+                pdf.addImage(imgData, 'PNG', 0, 0, imgWidth, imgHeight, undefined, 'FAST');
+
+                pdf.save(`جهاز_${selectedDeviceData.name}.pdf`);
+
+                document.body.removeChild(printContainer);
+            }).catch(error => {
+                alert('حدث خطأ في الطباعة: ' + error.message);
+                document.body.removeChild(printContainer);
+            });
+        }
+
+        // تشغيل البحث عند الكتابة
+        searchInput.addEventListener('input', searchDevices);
+
+        // تشغيل البحث عند اللصق
+        searchInput.addEventListener('paste', function() {
+            setTimeout(searchDevices, 100);
+        });
+
+        // تشغيل البحث عند فتح الصفحة
+        window.onload = function() {
+            searchDevices();
+        };
+    </script>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

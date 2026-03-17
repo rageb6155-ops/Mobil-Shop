@@ -1,0 +1,95 @@
+﻿using System.ComponentModel.DataAnnotations;
+
+namespace MobileShopSystem.ViewModels
+{
+    public class ShopRequestViewModel
+    {
+        public int Id { get; set; }
+
+        [Required(ErrorMessage = "اسم القطعة مطلوب")]
+        [Display(Name = "اسم القطعة")]
+        public string ItemName { get; set; }
+
+        [Required(ErrorMessage = "نوع القطعة مطلوب")]
+        [Display(Name = "النوع")]
+        public string ItemType { get; set; }
+
+        [Required(ErrorMessage = "الكمية مطلوبة")]
+        [Range(1, int.MaxValue, ErrorMessage = "الكمية يجب أن تكون 1 على الأقل")]
+        public int Quantity { get; set; }
+
+        [Display(Name = "سعر الوحدة")]
+        [Range(0, double.MaxValue, ErrorMessage = "السعر يجب أن يكون أكبر من أو يساوي 0")]
+        public decimal? UnitPrice { get; set; }
+
+        [Display(Name = "السعر الإجمالي")]
+        public decimal? TotalPrice { get; set; }
+
+        [Display(Name = "المورد")]
+        public string? Supplier { get; set; }
+
+        [Display(Name = "رقم المورد")]
+        [Phone(ErrorMessage = "رقم الهاتف غير صحيح")]
+        public string? PhoneNumber { get; set; }
+
+        [Display(Name = "ملاحظات")]
+        [StringLength(500)]
+        public string? Notes { get; set; }
+
+        [Display(Name = "الأولوية")]
+        [Range(1, 3)]
+        public int Priority { get; set; } = 1;
+
+        [Display(Name = "الحالة")]
+        public string Status { get; set; } = "قيد الانتظار";
+
+        [Display(Name = "تاريخ الطلب")]
+        public DateTime RequestDate { get; set; } = DateTime.Now;
+
+        [Display(Name = "تاريخ التسليم المطلوب")]
+        [DataType(DataType.Date)]
+        public DateTime? DueDate { get; set; }
+
+        // للعرض فقط
+        public string PriorityText => Priority switch
+        {
+            1 => "🟢 عادي",
+            2 => "🟠 مهم",
+            3 => "🔴 عاجل",
+            _ => "⚪ غير معروف"
+        };
+
+        public string StatusColor => Status switch
+        {
+            "قيد الانتظار" => "badge bg-warning text-dark",
+            "تم الطلب" => "badge bg-info text-dark",
+            "تم الاستلام" => "badge bg-success",
+            "ملغي" => "badge bg-danger",
+            _ => "badge bg-secondary"
+        };
+
+        // للمستخدمين
+        public string? CreatedByName { get; set; }
+        public DateTime CreatedAt { get; set; }
+        public string? UpdatedByName { get; set; }
+        public DateTime? UpdatedAt { get; set; }
+    }
+
+    public class ShopRequestFilterViewModel
+    {
+        public DateTime? FromDate { get; set; }
+        public DateTime? ToDate { get; set; }
+        public string? ItemType { get; set; }
+        public string? Status { get; set; }
+        public int? Priority { get; set; }
+        public string? SearchTerm { get; set; }
+    }
+
+    public class BulkWhatsAppViewModel
+    {
+        public List<int> RequestIds { get; set; } = new();
+        public string PhoneNumber { get; set; }
+        public string Message { get; set; }
+        public bool IsDailyReport { get; set; }
+    }
+}

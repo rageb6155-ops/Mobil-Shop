@@ -1,0 +1,36 @@
+﻿<h3>تقفيل الحساب اليومي</h3>
+
+<form method="post">
+    <label>الفلوس اللي سايبها</label>
+    <input name="CashLeft" class="form-control" required />
+
+    <label>الفكة</label>
+    <input name="Coins" class="form-control" required />
+
+    <hr />
+    <h5>ماكينات الدفع</h5>
+
+    <div id="machines"></div>
+
+    <button type="button" class="btn btn-secondary" onclick="addMachine()">➕ إضافة ماكينة</button>
+
+    <br /><br />
+    <button type="submit" class="btn btn-success">💾 حفظ</button>
+    <a href="/Home/Index" class="btn btn-dark">↩ رجوع للرئيسية</a>
+</form>
+
+<script>
+    function addMachine() {
+        const div = document.createElement("div");
+        div.className = "row mb-2";
+        div.innerHTML = `
+            <div class="col">
+                <input name="PaymentMachines[].MachineName" class="form-control" placeholder="اسم الماكينة" required />
+            </div>
+            <div class="col">
+                <input name="PaymentMachines[].Balance" type="number" class="form-control" placeholder="الرصيد" required />
+            </div>
+        `;
+        document.getElementById("machines").appendChild(div);
+    }
+</script>

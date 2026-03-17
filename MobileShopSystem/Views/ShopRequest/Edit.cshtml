@@ -1,0 +1,979 @@
+﻿@model MobileShopSystem.ViewModels.ShopRequestViewModel
+@{
+    ViewData["Title"] = "تعديل الطلب";
+    var username = Context.Session.GetString("Username") ?? "زائر";
+    var today = DateTime.Now;
+    var dayName = today.ToString("dddd", new System.Globalization.CultureInfo("ar-EG"));
+
+    // قائمة الأولويات من الـ Controller
+    var priorities = new Dictionary<int, string>
+    {
+        { 1, "🟢 عادي" },
+        { 2, "🟠 مهم" },
+        { 3, "🔴 عاجل" }
+    };
+
+    // قائمة الحالات من الـ Controller
+    var statuses = new List<string> { "معلق", "قيد التنفيذ", "مكتمل", "ملغي" };
+
+    // قائمة الأنواع من الـ Controller
+    var itemTypes = new List<string> { "شاحن", "سكرينة", "بطارية", "كابل", "سماعة", "قطعة غيار", "أخرى" };
+}
+
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>@ViewData["Title"]</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" />
+
+    <style>
+        :root {
+            --primary: #f39c12;
+            --secondary: #6c757d;
+            --success: #28a745;
+            --danger: #dc3545;
+            --warning: #ffc107;
+            --info: #17a2b8;
+            --dark: #343a40;
+            --light: #f8f9fa;
+            --gradient-1: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            --gradient-2: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+            --gradient-3: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+            --gradient-4: linear-gradient(135deg, #43e97b 0%, #38f9d7 100%);
+            --gradient-5: linear-gradient(135deg, #fa709a 0%, #fee140 100%);
+            --shadow-sm: 0 2px 8px rgba(0,0,0,0.1);
+            --shadow-md: 0 5px 15px rgba(0,0,0,0.15);
+            --shadow-lg: 0 10px 25px rgba(0,0,0,0.2);
+            --border-radius: 16px;
+        }
+
+        body {
+            background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+            font-family: 'Segoe UI', Tahoma, sans-serif;
+            margin: 0;
+            padding: 20px;
+            min-height: 100vh;
+        }
+
+        .page-wrapper {
+            max-width: 900px;
+            margin: 0 auto;
+            animation: fadeInUp 0.5s ease-out forwards;
+        }
+
+        @@keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .header-card {
+            background: white;
+            border-radius: var(--border-radius);
+            padding: 20px 25px;
+            margin-bottom: 25px;
+            box-shadow: var(--shadow-lg);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 15px;
+        }
+
+        .header-title h1 {
+            margin: 0;
+            font-size: 26px;
+            font-weight: 600;
+            color: var(--primary);
+        }
+
+        .header-title p {
+            margin: 5px 0 0;
+            color: var(--secondary);
+            font-size: 14px;
+        }
+
+        .user-info {
+            background: var(--gradient-5);
+            color: white;
+            padding: 8px 20px;
+            border-radius: 50px;
+            font-size: 14px;
+            font-weight: 500;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .main-card {
+            background: white;
+            border-radius: var(--border-radius);
+            padding: 30px;
+            box-shadow: var(--shadow-lg);
+        }
+
+        .card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 25px;
+            padding-bottom: 15px;
+            border-bottom: 2px solid #f0f0f0;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+
+            .card-header h2 {
+                margin: 0;
+                color: var(--primary);
+                font-size: 22px;
+                display: flex;
+                align-items: center;
+                gap: 10px;
+            }
+
+        .badge-id {
+            background: var(--primary);
+            color: white;
+            padding: 5px 15px;
+            border-radius: 50px;
+            font-size: 14px;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .form-label {
+            display: block;
+            margin-bottom: 8px;
+            color: #495057;
+            font-weight: 500;
+            font-size: 14px;
+        }
+
+            .form-label i {
+                color: var(--primary);
+                margin-left: 5px;
+                width: 20px;
+            }
+
+        .form-control, .form-select {
+            width: 100%;
+            padding: 12px 15px;
+            border: 2px solid #e9ecef;
+            border-radius: 10px;
+            font-size: 14px;
+            transition: all 0.3s;
+            background: white;
+        }
+
+            .form-control:focus, .form-select:focus {
+                outline: none;
+                border-color: var(--primary);
+                box-shadow: 0 0 0 3px rgba(243, 156, 18, 0.1);
+            }
+
+            .form-control.is-invalid, .form-select.is-invalid {
+                border-color: var(--danger);
+                background-color: #fff8f8;
+            }
+
+        .invalid-feedback {
+            color: var(--danger);
+            font-size: 12px;
+            margin-top: 5px;
+            display: block;
+        }
+
+        .btn {
+            padding: 12px 25px;
+            border: none;
+            border-radius: 10px;
+            font-size: 14px;
+            cursor: pointer;
+            transition: all 0.3s;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            text-decoration: none;
+            font-weight: 500;
+        }
+
+        .btn-primary {
+            background: var(--gradient-5);
+            color: white;
+        }
+
+            .btn-primary:hover {
+                transform: translateY(-2px);
+                box-shadow: var(--shadow-md);
+            }
+
+        .btn-secondary {
+            background: linear-gradient(135deg, #6c757d, #5a6268);
+            color: white;
+        }
+
+            .btn-secondary:hover {
+                transform: translateY(-2px);
+                box-shadow: var(--shadow-md);
+            }
+
+        .btn-danger {
+            background: linear-gradient(135deg, #dc3545, #c82333);
+            color: white;
+        }
+
+            .btn-danger:hover {
+                transform: translateY(-2px);
+                box-shadow: var(--shadow-md);
+            }
+
+        .btn-info {
+            background: var(--gradient-3);
+            color: white;
+        }
+
+        .form-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+        }
+
+        .alert {
+            padding: 15px 20px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .alert-danger {
+            background: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+
+        .alert-success {
+            background: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+
+        .alert-warning {
+            background: #fff3cd;
+            color: #856404;
+            border: 1px solid #ffeeba;
+        }
+
+        .alert-info {
+            background: #d1ecf1;
+            color: #0c5460;
+            border: 1px solid #bee5eb;
+        }
+
+        .info-box {
+            background: linear-gradient(135deg, #f8f9fa, #e9ecef);
+            border-right: 4px solid var(--info);
+            padding: 15px;
+            border-radius: 8px;
+            margin: 20px 0;
+            font-size: 13px;
+        }
+
+        .info-item {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 8px;
+        }
+
+            .info-item i {
+                color: var(--info);
+                width: 20px;
+            }
+
+            .info-item strong {
+                color: var(--dark);
+                margin-left: 5px;
+            }
+
+        .action-buttons {
+            display: flex;
+            gap: 15px;
+            justify-content: flex-end;
+            margin-top: 30px;
+            flex-wrap: wrap;
+        }
+
+        .badge {
+            padding: 5px 12px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 500;
+            display: inline-block;
+        }
+
+        .badge-info {
+            background: #d1ecf1;
+            color: #0c5460;
+        }
+
+        .badge-warning {
+            background: #fff3cd;
+            color: #856404;
+        }
+
+        .badge-success {
+            background: #d4edda;
+            color: #155724;
+        }
+
+        .phone-input-container {
+            position: relative;
+            direction: ltr;
+        }
+
+            .phone-input-container .form-control {
+                padding-right: 40px;
+            }
+
+        .phone-prefix {
+            position: absolute;
+            right: 15px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: var(--primary);
+            font-weight: bold;
+        }
+
+        .total-price {
+            background: #fff3e0;
+            padding: 10px 15px;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: bold;
+            color: var(--primary);
+            text-align: left;
+        }
+
+            .total-price span {
+                color: var(--dark);
+                font-weight: normal;
+                margin-left: 10px;
+            }
+
+        @@media (max-width: 768px) {
+            .form-row {
+                grid-template-columns: 1fr;
+                gap: 15px;
+            }
+
+            .action-buttons {
+                flex-direction: column;
+            }
+
+                .action-buttons .btn {
+                    width: 100%;
+                }
+
+            .header-card {
+                flex-direction: column;
+                text-align: center;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="page-wrapper">
+        <div class="header-card">
+            <div class="header-title">
+                <h1>
+                    <i class="fas fa-edit"></i> تعديل الطلب
+                </h1>
+                <p>تعديل بيانات الطلب رقم #@Model.Id</p>
+            </div>
+            <div class="user-info">
+                <i class="fas fa-user-circle"></i> @username
+                <i class="fas fa-calendar mx-2"></i> @dayName
+            </div>
+        </div>
+
+        @if (TempData["ErrorMessage"] != null)
+        {
+            <div class="alert alert-danger">
+                <i class="fas fa-exclamation-circle"></i> @TempData["ErrorMessage"]
+            </div>
+        }
+
+        @if (TempData["SuccessMessage"] != null)
+        {
+            <div class="alert alert-success">
+                <i class="fas fa-check-circle"></i> @TempData["SuccessMessage"]
+            </div>
+        }
+
+        <div class="main-card">
+            <div class="card-header">
+                <h2>
+                    <i class="fas fa-pen"></i>
+                    تعديل البيانات
+                    <span class="badge-id">#@Model.Id</span>
+                </h2>
+                <div class="badge badge-info">
+                    <i class="fas fa-calendar-alt"></i>
+                    تاريخ الإنشاء: @(Model.RequestDate.ToString("yyyy/MM/dd") ?? "غير محدد")
+                </div>
+            </div>
+
+            <form asp-action="Edit" asp-route-id="@Model.Id" method="post" id="editForm">
+                @Html.AntiForgeryToken()
+                <input type="hidden" asp-for="Id" />
+                <input type="hidden" asp-for="RequestDate" />
+                <input type="hidden" asp-for="CreatedByName" />
+
+                <div class="alert alert-info">
+                    <i class="fas fa-info-circle"></i>
+                    <div>
+                        <strong>معلومات مهمة:</strong> يتم تحديث تاريخ التعديل تلقائياً بعد حفظ التغييرات
+                    </div>
+                </div>
+
+                <div class="form-row">
+                    <!-- اسم القطعة -->
+                    <div class="form-group">
+                        <label class="form-label" for="ItemName">
+                            <i class="fas fa-box"></i> اسم القطعة
+                        </label>
+                        <input type="text"
+                               class="form-control"
+                               id="ItemName"
+                               name="ItemName"
+                               value="@Model.ItemName"
+                               placeholder="أدخل اسم القطعة"
+                               required />
+                        <span class="invalid-feedback" id="ItemNameError">الرجاء إدخال اسم القطعة</span>
+                    </div>
+
+                    <!-- النوع -->
+                    <div class="form-group">
+                        <label class="form-label" for="ItemType">
+                            <i class="fas fa-tag"></i> النوع
+                        </label>
+                        <select class="form-select" id="ItemType" name="ItemType" required>
+                            <option value="">اختر النوع...</option>
+                            @foreach (var type in itemTypes)
+                            {
+                                if (type == Model.ItemType)
+                                {
+                                    <option value="@type" selected>@type</option>
+                                }
+                                else
+                                {
+                                    <option value="@type">@type</option>
+                                }
+                            }
+                        </select>
+                        <span class="invalid-feedback" id="ItemTypeError">الرجاء اختيار النوع</span>
+                    </div>
+                </div>
+
+                <div class="form-row">
+                    <!-- الكمية -->
+                    <div class="form-group">
+                        <label class="form-label" for="Quantity">
+                            <i class="fas fa-sort-numeric-up-alt"></i> الكمية
+                        </label>
+                        <input type="number"
+                               class="form-control"
+                               id="Quantity"
+                               name="Quantity"
+                               value="@Model.Quantity"
+                               placeholder="أدخل الكمية"
+                               min="1"
+                               step="1"
+                               required />
+                        <span class="invalid-feedback" id="QuantityError">الرجاء إدخال كمية صحيحة</span>
+                    </div>
+
+                    <!-- السعر -->
+                    <div class="form-group">
+                        <label class="form-label" for="UnitPrice">
+                            <i class="fas fa-money-bill-wave"></i> السعر (اختياري)
+                        </label>
+                        <input type="number"
+                               class="form-control"
+                               id="UnitPrice"
+                               name="UnitPrice"
+                               value="@(Model.UnitPrice.HasValue? Model.UnitPrice.Value.ToString("F2") : "")"
+                               placeholder="أدخل السعر"
+                               min="0"
+                               step="0.01" />
+                        <span class="invalid-feedback" id="UnitPriceError">السعر يجب أن يكون رقماً صحيحاً</span>
+                    </div>
+                </div>
+
+                <!-- المجموع الكلي (للقراءة فقط) -->
+                @if (Model.UnitPrice.HasValue && Model.Quantity > 0)
+                {
+                    <div class="total-price">
+                        <span>المجموع التقديري:</span>
+                        @((Model.Quantity * Model.UnitPrice.Value).ToString("N0")) ج.م
+                    </div>
+                }
+
+                <div class="form-row">
+                    <!-- المورد -->
+                    <div class="form-group">
+                        <label class="form-label" for="Supplier">
+                            <i class="fas fa-truck"></i> المورد (اختياري)
+                        </label>
+                        <input type="text"
+                               class="form-control"
+                               id="Supplier"
+                               name="Supplier"
+                               value="@Model.Supplier"
+                               placeholder="أدخل اسم المورد" />
+                    </div>
+
+                    <!-- رقم الهاتف -->
+                    <div class="form-group">
+                        <label class="form-label" for="PhoneNumber">
+                            <i class="fab fa-whatsapp"></i> رقم الهاتف (اختياري)
+                        </label>
+                        <div class="phone-input-container">
+                            <span class="phone-prefix">🇪🇬 +20</span>
+                            <input type="tel"
+                                   class="form-control"
+                                   id="PhoneNumber"
+                                   name="PhoneNumber"
+                                   value="@Model.PhoneNumber"
+                                   placeholder="01000000000 "
+                                   dir="ltr"
+                                   style="text-align: left;" />
+                        </div>
+                        <small class="text-muted">مثال: 0100000000</small>
+                        <span class="invalid-feedback" id="PhoneNumberError">رقم الهاتف غير صحيح</span>
+                    </div>
+                </div>
+
+                <div class="form-row">
+                    <!-- الأولوية -->
+                    <div class="form-group">
+                        <label class="form-label" for="Priority">
+                            <i class="fas fa-exclamation-triangle"></i> الأولوية
+                        </label>
+                        <select class="form-select" id="Priority" name="Priority" required>
+                            @foreach (var priority in priorities)
+                            {
+                                if (priority.Key == Model.Priority)
+                                {
+                                    <option value="@priority.Key" selected>@priority.Value</option>
+                                }
+                                else
+                                {
+                                    <option value="@priority.Key">@priority.Value</option>
+                                }
+                            }
+                        </select>
+                    </div>
+
+                    <!-- الحالة -->
+                    <div class="form-group">
+                        <label class="form-label" for="Status">
+                            <i class="fas fa-check-circle"></i> الحالة
+                        </label>
+                        <select class="form-select" id="Status" name="Status" required>
+                            @foreach (var status in statuses)
+                            {
+                                if (status == Model.Status)
+                                {
+                                    <option value="@status" selected>@status</option>
+                                }
+                                else
+                                {
+                                    <option value="@status">@status</option>
+                                }
+                            }
+                        </select>
+                    </div>
+                </div>
+
+                <!-- تاريخ الاستحقاق -->
+                <div class="form-group">
+                    <label class="form-label" for="DueDate">
+                        <i class="fas fa-calendar-check"></i> تاريخ الاستحقاق (اختياري)
+                    </label>
+                    <input type="date"
+                           class="form-control"
+                           id="DueDate"
+                           name="DueDate"
+                           value="@(Model.DueDate?.ToString("yyyy-MM-dd"))" />
+                </div>
+
+                <!-- ملاحظات -->
+                <div class="form-group">
+                    <label class="form-label" for="Notes">
+                        <i class="fas fa-sticky-note"></i> ملاحظات (اختياري)
+                    </label>
+                    <textarea class="form-control"
+                              id="Notes"
+                              name="Notes"
+                              rows="4"
+                              placeholder="أدخل أي ملاحظات إضافية...">@Model.Notes</textarea>
+                </div>
+
+                <!-- معلومات إضافية -->
+                <div class="info-box">
+                    <div class="info-item">
+                        <i class="fas fa-user"></i>
+                        <span><strong>تم الإنشاء بواسطة:</strong> @(Model.CreatedByName ?? "غير معروف")</span>
+                    </div>
+                    <div class="info-item">
+                        <i class="fas fa-clock"></i>
+                        <span><strong>تاريخ الإنشاء:</strong> @(Model.RequestDate.ToString("yyyy/MM/dd HH:mm") ?? "غير محدد")</span>
+                    </div>
+                    @if (Model.UpdatedAt.HasValue)
+                    {
+                        <div class="info-item">
+                            <i class="fas fa-history"></i>
+                            <span><strong>آخر تعديل:</strong> @(Model.UpdatedAt?.ToString("yyyy/MM/dd HH:mm"))</span>
+                        </div>
+                    }
+                    <div class="info-item">
+                        <i class="fas fa-sync-alt"></i>
+                        <span><strong>سيتم التعديل بواسطة:</strong> @username</span>
+                    </div>
+                </div>
+
+                <div class="action-buttons">
+                    <a href="/ShopRequest/Index" class="btn btn-secondary">
+                        <i class="fas fa-arrow-right"></i> العودة
+                    </a>
+                    <button type="button" class="btn btn-info" onclick="resetForm()">
+                        <i class="fas fa-undo-alt"></i> إعادة تعيين
+                    </button>
+                    <button type="submit" class="btn btn-primary" id="submitBtn">
+                        <i class="fas fa-save"></i> حفظ التعديلات
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        // الحصول على القيم الأصلية لإعادة التعيين
+        const originalValues = {
+            ItemName: '@(Model.ItemName?.Replace("'", "\\'") ?? "")',
+            ItemType: '@(Model.ItemType ?? "")',
+            Quantity: @(Model.Quantity),
+            UnitPrice: @(Model.UnitPrice?.ToString(System.Globalization.CultureInfo.InvariantCulture) ?? "null"),
+            Supplier: '@(Model.Supplier?.Replace("'", "\\'") ?? "")',
+            PhoneNumber: '@(Model.PhoneNumber?.Replace("'", "\\'") ?? "")',
+            Priority: @(Model.Priority),
+            Status: '@(Model.Status ?? "")',
+            DueDate: '@(Model.DueDate?.ToString("yyyy-MM-dd") ?? "")',
+            Notes: '@(Model.Notes?.Replace("'", "\\'")?.Replace("\n", "\\n") ?? "")'
+        };
+
+        // ===== التحقق من صحة رقم الهاتف =====
+        document.getElementById('PhoneNumber')?.addEventListener('input', function(e) {
+            let value = e.target.value;
+            // تنظيف الرقم من الأحرف غير الرقمية
+            value = value.replace(/[^0-9]/g, '');
+
+            // التأكد من أن الرقم يبدأ ب 0
+            if (value.length > 0 && value[0] !== '0') {
+                value = '0' + value;
+            }
+
+            // تحديد أقصى طول للرقم
+            if (value.length > 11) {
+                value = value.slice(0, 11);
+            }
+
+            e.target.value = value;
+
+            // التحقق من صحة الرقم
+            validatePhone(value);
+        });
+
+        // ===== التحقق من صحة الرقم =====
+        function validatePhone(phone) {
+            const phoneError = document.getElementById('PhoneNumberError');
+            if (phone && phone.length > 0) {
+                if (!/^01[0-9]{9}$/.test(phone)) {
+                    phoneError.style.display = 'block';
+                    return false;
+                } else {
+                    phoneError.style.display = 'none';
+                    return true;
+                }
+            }
+            phoneError.style.display = 'none';
+            return true;
+        }
+
+        // ===== التحقق من صحة الكمية =====
+        document.getElementById('Quantity')?.addEventListener('input', function(e) {
+            let value = parseInt(e.target.value);
+            if (isNaN(value) || value < 1) {
+                e.target.value = 1;
+                document.getElementById('QuantityError').style.display = 'block';
+            } else {
+                document.getElementById('QuantityError').style.display = 'none';
+            }
+            updateTotalPrice();
+        });
+
+        // ===== التحقق من صحة السعر =====
+        document.getElementById('UnitPrice')?.addEventListener('input', function(e) {
+            let value = parseFloat(e.target.value);
+            if (isNaN(value) || value < 0) {
+                e.target.value = 0;
+            }
+            updateTotalPrice();
+        });
+
+        // ===== تحديث السعر الإجمالي =====
+        function updateTotalPrice() {
+            const quantity = parseInt(document.getElementById('Quantity').value) || 0;
+            const price = parseFloat(document.getElementById('UnitPrice').value) || 0;
+            const total = quantity * price;
+
+            let totalDiv = document.querySelector('.total-price');
+            if (total > 0) {
+                if (!totalDiv) {
+                    totalDiv = document.createElement('div');
+                    totalDiv.className = 'total-price';
+                    document.querySelector('.form-row:nth-child(2)').after(totalDiv);
+                }
+                totalDiv.innerHTML = `<span>المجموع التقديري:</span> ${total.toLocaleString()} ج.م`;
+            } else if (totalDiv) {
+                totalDiv.remove();
+            }
+        }
+
+        // ===== التحقق من الحقول المطلوبة قبل الإرسال =====
+        function validateForm() {
+            let isValid = true;
+
+            // التحقق من اسم القطعة
+            const itemName = document.getElementById('ItemName').value.trim();
+            if (!itemName) {
+                document.getElementById('ItemName').classList.add('is-invalid');
+                document.getElementById('ItemNameError').style.display = 'block';
+                isValid = false;
+            } else {
+                document.getElementById('ItemName').classList.remove('is-invalid');
+                document.getElementById('ItemNameError').style.display = 'none';
+            }
+
+            // التحقق من النوع
+            const itemType = document.getElementById('ItemType').value;
+            if (!itemType) {
+                document.getElementById('ItemType').classList.add('is-invalid');
+                document.getElementById('ItemTypeError').style.display = 'block';
+                isValid = false;
+            } else {
+                document.getElementById('ItemType').classList.remove('is-invalid');
+                document.getElementById('ItemTypeError').style.display = 'none';
+            }
+
+            // التحقق من الكمية
+            const quantity = parseInt(document.getElementById('Quantity').value);
+            if (isNaN(quantity) || quantity < 1) {
+                document.getElementById('Quantity').classList.add('is-invalid');
+                document.getElementById('QuantityError').style.display = 'block';
+                isValid = false;
+            } else {
+                document.getElementById('Quantity').classList.remove('is-invalid');
+                document.getElementById('QuantityError').style.display = 'none';
+            }
+
+            // التحقق من رقم الهاتف إذا تم إدخاله
+            const phone = document.getElementById('PhoneNumber').value;
+            if (phone && !validatePhone(phone)) {
+                document.getElementById('PhoneNumber').classList.add('is-invalid');
+                isValid = false;
+            } else {
+                document.getElementById('PhoneNumber').classList.remove('is-invalid');
+            }
+
+            return isValid;
+        }
+
+        // ===== إعادة تعيين النموذج =====
+        function resetForm() {
+            if (confirm('هل أنت متأكد من إعادة تعيين جميع التغييرات؟')) {
+                document.getElementById('ItemName').value = originalValues.ItemName;
+                document.getElementById('ItemType').value = originalValues.ItemType;
+                document.getElementById('Quantity').value = originalValues.Quantity;
+                document.getElementById('UnitPrice').value = originalValues.UnitPrice;
+                document.getElementById('Supplier').value = originalValues.Supplier;
+                document.getElementById('PhoneNumber').value = originalValues.PhoneNumber;
+                document.getElementById('Priority').value = originalValues.Priority;
+                document.getElementById('Status').value = originalValues.Status;
+                document.getElementById('DueDate').value = originalValues.DueDate;
+                document.getElementById('Notes').value = originalValues.Notes;
+
+                // إزالة أي أخطاء
+                document.querySelectorAll('.is-invalid').forEach(el => {
+                    el.classList.remove('is-invalid');
+                });
+
+                updateTotalPrice();
+                showResult('✅ تم إعادة تعيين النموذج', 'success');
+            }
+        }
+
+        // ===== تأكيد الحفظ قبل الإرسال =====
+        document.getElementById('editForm')?.addEventListener('submit', function(e) {
+            e.preventDefault();
+
+            if (!validateForm()) {
+                showResult('❌ الرجاء تصحيح الأخطاء قبل الحفظ', 'danger');
+                return;
+            }
+
+            // التحقق من وجود تغييرات
+            let hasChanges = false;
+            if (document.getElementById('ItemName').value.trim() !== originalValues.ItemName) hasChanges = true;
+            if (document.getElementById('ItemType').value !== originalValues.ItemType) hasChanges = true;
+            if (parseInt(document.getElementById('Quantity').value) !== originalValues.Quantity) hasChanges = true;
+            if (parseFloat(document.getElementById('UnitPrice').value || 0) !== (originalValues.UnitPrice || 0)) hasChanges = true;
+            if (document.getElementById('Supplier').value !== originalValues.Supplier) hasChanges = true;
+            if (document.getElementById('PhoneNumber').value !== originalValues.PhoneNumber) hasChanges = true;
+            if (parseInt(document.getElementById('Priority').value) !== originalValues.Priority) hasChanges = true;
+            if (document.getElementById('Status').value !== originalValues.Status) hasChanges = true;
+            if (document.getElementById('DueDate').value !== originalValues.DueDate) hasChanges = true;
+            if (document.getElementById('Notes').value !== originalValues.Notes) hasChanges = true;
+
+            if (!hasChanges) {
+                if (!confirm('لم تقم بإجراء أي تغييرات. هل تريد المتابعة؟')) {
+                    return;
+                }
+            }
+
+            // إظهار تأكيد الحفظ
+            if (confirm('هل أنت متأكد من حفظ التعديلات؟')) {
+                // تعطيل الزر لمنع النقر المزدوج
+                const submitBtn = document.getElementById('submitBtn');
+                submitBtn.disabled = true;
+                submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> جاري الحفظ...';
+
+                this.submit();
+            }
+        });
+
+        // ===== إزالة class is-invalid عند التعديل =====
+        document.querySelectorAll('.form-control, .form-select').forEach(input => {
+            input.addEventListener('input', function() {
+                this.classList.remove('is-invalid');
+                if (this.id === 'ItemName' || this.id === 'ItemType' || this.id === 'Quantity') {
+                    document.getElementById(this.id + 'Error').style.display = 'none';
+                }
+            });
+            input.addEventListener('change', function() {
+                this.classList.remove('is-invalid');
+                if (this.id === 'ItemName' || this.id === 'ItemType' || this.id === 'Quantity') {
+                    document.getElementById(this.id + 'Error').style.display = 'none';
+                }
+            });
+        });
+
+        // ===== عرض النتائج =====
+        function showResult(message, type) {
+            const alertDiv = document.createElement('div');
+            alertDiv.className = `alert alert-${type}`;
+            alertDiv.innerHTML = `<i class="fas fa-${type === 'success' ? 'check-circle' : 'exclamation-circle'}"></i> ${message}`;
+
+            const form = document.getElementById('editForm');
+            form.parentNode.insertBefore(alertDiv, form);
+
+            setTimeout(() => {
+                alertDiv.remove();
+            }, 3000);
+        }
+
+        // ===== تحذير عند الخروج بدون حفظ =====
+        let formChanged = false;
+
+        document.querySelectorAll('#editForm input, #editForm select, #editForm textarea').forEach(input => {
+            input.addEventListener('change', () => {
+                formChanged = true;
+            });
+            input.addEventListener('input', () => {
+                formChanged = true;
+            });
+        });
+
+        window.addEventListener('beforeunload', function(e) {
+            if (formChanged) {
+                // التحقق من وجود تغييرات فعلية
+                let hasRealChanges = false;
+                if (document.getElementById('ItemName').value.trim() !== originalValues.ItemName) hasRealChanges = true;
+                if (document.getElementById('ItemType').value !== originalValues.ItemType) hasRealChanges = true;
+                if (parseInt(document.getElementById('Quantity').value) !== originalValues.Quantity) hasRealChanges = true;
+                if (parseFloat(document.getElementById('UnitPrice').value || 0) !== (originalValues.UnitPrice || 0)) hasRealChanges = true;
+                if (document.getElementById('Supplier').value !== originalValues.Supplier) hasRealChanges = true;
+                if (document.getElementById('PhoneNumber').value !== originalValues.PhoneNumber) hasRealChanges = true;
+                if (parseInt(document.getElementById('Priority').value) !== originalValues.Priority) hasRealChanges = true;
+                if (document.getElementById('Status').value !== originalValues.Status) hasRealChanges = true;
+                if (document.getElementById('DueDate').value !== originalValues.DueDate) hasRealChanges = true;
+                if (document.getElementById('Notes').value !== originalValues.Notes) hasRealChanges = true;
+
+                if (hasRealChanges) {
+                    e.preventDefault();
+                    e.returnValue = 'لديك تغييرات غير محفوظة. هل تريد المغادرة؟';
+                }
+            }
+        });
+
+        // ===== تنسيق الرقم عند اللصق =====
+        document.getElementById('PhoneNumber')?.addEventListener('paste', function(e) {
+            e.preventDefault();
+            const pastedText = (e.clipboardData || window.clipboardData).getData('text');
+            const cleaned = pastedText.replace(/[^0-9]/g, '');
+            let value = cleaned;
+
+            if (value.length > 0 && value[0] !== '0') {
+                value = '0' + value;
+            }
+
+            if (value.length > 11) {
+                value = value.slice(0, 11);
+            }
+
+            this.value = value;
+            validatePhone(value);
+        });
+
+        // ===== تهيئة الصفحة =====
+        document.addEventListener('DOMContentLoaded', function() {
+            // التحقق من صحة الرقم عند التحميل
+            if (document.getElementById('PhoneNumber').value) {
+                validatePhone(document.getElementById('PhoneNumber').value);
+            }
+
+            // تحديث السعر الإجمالي
+            updateTotalPrice();
+
+            console.log('✅ صفحة التعديل جاهزة');
+        });
+    </script>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

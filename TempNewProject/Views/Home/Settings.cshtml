@@ -1,0 +1,40 @@
+﻿@model List<MobileShopSystem.Models.User>
+
+@{
+    ViewData["Title"] = "الإعدادات";
+}
+
+<h2>إدارة المستخدمين</h2>
+
+<table class="table table-bordered table-striped">
+    <thead class="table-dark">
+        <tr>
+            <th>اسم المستخدم</th>
+            <th>الهاتف</th>
+            <th>أدمن</th>
+            <th>موافقة</th>
+            <th>حظر</th>
+            <th>متصل الآن</th>
+            <th>إجراءات</th>
+        </tr>
+    </thead>
+    <tbody>
+        @foreach (var user in Model)
+        {
+            <tr>
+                <td>@user.Username</td>
+                <td>@user.Phone</td>
+                <td>@user.IsAdmin</td>
+                <td>@user.IsApproved</td>
+                <td>@user.IsBlocked</td>
+                <td>@user.IsOnline</td>
+                <td>
+                    <a class="btn btn-success btn-sm" href="#">تحويل لأدمن</a>
+                    <a class="btn btn-warning btn-sm" href="#">موافقة</a>
+                    <a class="btn btn-danger btn-sm" href="#">حظر</a>
+                    <a class="btn btn-info btn-sm" href="#">تعديل</a>
+                </td>
+            </tr>
+        }
+    </tbody>
+</table>

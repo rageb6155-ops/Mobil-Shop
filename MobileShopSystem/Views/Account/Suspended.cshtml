@@ -1,0 +1,342 @@
+﻿@{
+    ViewData["Title"] = "الحساب معلق";
+    var suspensionMessage = ViewBag.SuspensionMessage as string ?? "حسابك معلق مؤقتاً. يرجى التواصل مع الإدارة.";
+}
+
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>@ViewData["Title"] - Mobile Shop</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" />
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0;
+            padding: 20px;
+        }
+
+        .suspended-container {
+            max-width: 500px;
+            width: 100%;
+            animation: fadeInUp 0.6s ease-out;
+        }
+
+        @@keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(30px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .suspended-card {
+            background: white;
+            border-radius: 24px;
+            padding: 40px 30px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            text-align: center;
+            border: 1px solid rgba(255,255,255,0.1);
+            backdrop-filter: blur(10px);
+        }
+
+        .icon-container {
+            width: 100px;
+            height: 100px;
+            background: linear-gradient(135deg, #f39c12, #e67e22);
+            border-radius: 50%;
+            margin: 0 auto 25px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 10px 30px rgba(243, 156, 18, 0.3);
+        }
+
+            .icon-container i {
+                font-size: 50px;
+                color: white;
+            }
+
+        .shop-name {
+            color: #f39c12;
+            font-size: 24px;
+            font-weight: bold;
+            margin-bottom: 15px;
+            letter-spacing: 1px;
+        }
+
+        .message-box {
+            background: #f8f9fa;
+            border-radius: 16px;
+            padding: 25px;
+            margin: 25px 0;
+            border-right: 5px solid #f39c12;
+            text-align: right;
+        }
+
+            .message-box i {
+                color: #f39c12;
+                font-size: 24px;
+                margin-bottom: 10px;
+                display: block;
+            }
+
+            .message-box p {
+                font-size: 16px;
+                line-height: 1.7;
+                color: #333;
+                margin: 0;
+                white-space: pre-wrap;
+                word-wrap: break-word;
+            }
+
+        .info-text {
+            color: #666;
+            font-size: 14px;
+            margin: 20px 0;
+            padding: 10px;
+            background: #e8f4fd;
+            border-radius: 8px;
+        }
+
+            .info-text i {
+                color: #3498db;
+                margin-left: 5px;
+            }
+
+        .btn-logout {
+            background: linear-gradient(135deg, #e74c3c, #c0392b);
+            color: white;
+            border: none;
+            padding: 15px 30px;
+            border-radius: 50px;
+            font-size: 16px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            width: 100%;
+            max-width: 250px;
+            margin: 10px auto;
+            text-decoration: none;
+            box-shadow: 0 5px 15px rgba(231, 76, 60, 0.3);
+        }
+
+            .btn-logout:hover {
+                transform: translateY(-3px);
+                box-shadow: 0 8px 25px rgba(231, 76, 60, 0.4);
+            }
+
+            .btn-logout:active {
+                transform: translateY(0);
+            }
+
+        .footer {
+            margin-top: 20px;
+            color: rgba(255,255,255,0.8);
+            font-size: 12px;
+        }
+
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.5);
+            z-index: 9999;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .modal-content {
+            background: white;
+            border-radius: 16px;
+            padding: 30px;
+            max-width: 400px;
+            width: 90%;
+            text-align: center;
+            animation: slideDown 0.3s ease-out;
+        }
+
+        @@keyframes slideDown {
+            from {
+                opacity: 0;
+                transform: translateY(-50px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .modal-icon {
+            width: 60px;
+            height: 60px;
+            background: #f39c12;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 15px;
+        }
+
+            .modal-icon i {
+                font-size: 30px;
+                color: white;
+            }
+
+        .modal h3 {
+            color: #333;
+            margin-bottom: 10px;
+        }
+
+        .modal p {
+            color: #666;
+            margin-bottom: 20px;
+        }
+
+        .modal-buttons {
+            display: flex;
+            gap: 10px;
+            justify-content: center;
+        }
+
+        .btn-confirm {
+            background: #e74c3c;
+            color: white;
+            border: none;
+            padding: 10px 25px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: bold;
+            transition: all 0.3s;
+            flex: 1;
+        }
+
+        .btn-cancel {
+            background: #6c757d;
+            color: white;
+            border: none;
+            padding: 10px 25px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: bold;
+            transition: all 0.3s;
+            flex: 1;
+        }
+
+        .btn-confirm:hover {
+            background: #c0392b;
+        }
+
+        .btn-cancel:hover {
+            background: #5a6268;
+        }
+    </style>
+</head>
+<body>
+    <div class="suspended-container">
+        <div class="suspended-card">
+            <div class="icon-container">
+                <i class="fas fa-exclamation-triangle"></i>
+            </div>
+
+            <div class="shop-name">
+                <i class="fas fa-mobile-alt"></i> Mobile Shop
+            </div>
+
+            <div class="message-box">
+                <i class="fas fa-envelope-open-text"></i>
+                <p>@suspensionMessage</p>
+            </div>
+
+            <div class="info-text">
+                <i class="fas fa-info-circle"></i>
+                لا يمكنك استخدام النظام حالياً. للاستفسار، يرجى التواصل مع الإدارة.
+            </div>
+
+            <button class="btn-logout" onclick="showLogoutModal()">
+                <i class="fas fa-sign-out-alt"></i> تسجيل الخروج
+            </button>
+        </div>
+
+        <div class="footer">
+            © @DateTime.Now.Year - Mobile Shop System
+        </div>
+    </div>
+
+    <!-- مودال تأكيد تسجيل الخروج -->
+    <div id="logoutModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-icon">
+                <i class="fas fa-question"></i>
+            </div>
+            <h3>تأكيد تسجيل الخروج</h3>
+            <p>هل أنت متأكد من تسجيل الخروج؟</p>
+            <div class="modal-buttons">
+                <button class="btn-confirm" onclick="confirmLogout()">
+                    <i class="fas fa-check"></i> نعم
+                </button>
+                <button class="btn-cancel" onclick="hideLogoutModal()">
+                    <i class="fas fa-times"></i> لا
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        function showLogoutModal() {
+            document.getElementById('logoutModal').style.display = 'flex';
+        }
+
+        function hideLogoutModal() {
+            document.getElementById('logoutModal').style.display = 'none';
+        }
+
+        function confirmLogout() {
+            // إنشاء form وإرسال POST request
+            const form = document.createElement('form');
+            form.method = 'POST';
+            form.action = '/Account/ConfirmLogoutFromSuspension';
+
+            // إضافة anti-forgery token
+            const token = document.createElement('input');
+            token.type = 'hidden';
+            token.name = '__RequestVerificationToken';
+            token.value = '@Html.AntiForgeryToken()'.match(/value="([^"]*)"/)[1];
+            form.appendChild(token);
+
+            document.body.appendChild(form);
+            form.submit();
+        }
+
+        // منع المستخدم من استخدام زر الرجوع
+        history.pushState(null, null, location.href);
+        window.onpopstate = function () {
+            history.go(1);
+        };
+    </script>
+</body>
+</html>

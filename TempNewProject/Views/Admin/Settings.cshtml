@@ -1,0 +1,47 @@
+﻿@model IEnumerable<MobileShopSystem.Models.User>
+
+<div class="card p-4">
+    <h3>إدارة المستخدمين</h3>
+    <table class="table table-striped mt-3">
+        <thead>
+            <tr>
+                <th>اسم المستخدم</th>
+                <th>الهاتف</th>
+                <th>أدمن</th>
+                <th>موافقة</th>
+                <th>حظر</th>
+                <th>متصل الآن</th>
+                <th>إجراءات</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var user in Model)
+            {
+                <tr>
+                    <td>@user.Username</td>
+                    <td>@user.Phone</td>
+                    <td>@user.IsAdmin</td>
+                    <td>@user.IsApproved</td>
+                    <td>@user.IsBlocked</td>
+                    <td>
+                        @if (user.IsOnline)
+                        {
+                            <span class="status-online">متصل</span>
+                        }
+                        else
+                        {
+                            <span class="status-offline">غير متصل</span>
+                        }
+                    </td>
+                    <td>
+                        <a asp-action="ToggleAdmin" asp-route-id="@user.Id" class="btn btn-sm btn-warning">تغيير الصلاحية</a>
+                        <a asp-action="Approve" asp-route-id="@user.Id" class="btn btn-sm btn-success">موافقة</a>
+                        <a asp-action="Block" asp-route-id="@user.Id" class="btn btn-sm btn-danger">حظر</a>
+                        <a asp-action="Unblock" asp-route-id="@user.Id" class="btn btn-sm btn-info">فك الحظر</a>
+                        <a asp-action="Delete" asp-route-id="@user.Id" class="btn btn-sm btn-dark">حذف</a>
+                    </td>
+                </tr>
+            }
+        </tbody>
+    </table>
+</div>

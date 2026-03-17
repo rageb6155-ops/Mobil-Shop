@@ -1,0 +1,485 @@
+﻿@model MobileShopSystem.Models.DailyClosing
+@using System.Text.Json
+@using MobileShopSystem.Models
+
+@{
+    ViewBag.Title = "تفاصيل تقفيل الحساب";
+    var username = Context.Session.GetString("Username");
+
+    DailyClosingSnapshot? oldData = null;
+
+    if (!string.IsNullOrEmpty(Model.PreviousDataJson))
+    {
+        oldData = JsonSerializer.Deserialize<DailyClosingSnapshot>(Model.PreviousDataJson);
+    }
+}
+
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>@ViewBag.Title</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" />
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, sans-serif;
+            background: #ffffff;
+            margin: 0;
+            padding: 20px;
+            color: #333;
+        }
+
+        .page-wrapper {
+            max-width: 900px;
+            margin: 0 auto;
+        }
+
+        /* بطاقة العنوان */
+        .header-card {
+            background: white;
+            border-radius: 16px;
+            padding: 20px 25px;
+            margin-bottom: 25px;
+            box-shadow: 0 5px 20px rgba(0,0,0,0.05);
+            border: 1px solid #f0f0f0;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 15px;
+        }
+
+        .header-title h1 {
+            margin: 0;
+            font-size: 26px;
+            font-weight: 600;
+            color: #17a2b8;
+        }
+
+        .header-title p {
+            margin: 5px 0 0;
+            color: #6c757d;
+            font-size: 14px;
+        }
+
+        .user-info {
+            background: #f8f9fa;
+            color: #17a2b8;
+            padding: 8px 20px;
+            border-radius: 50px;
+            font-size: 14px;
+            font-weight: 500;
+            border: 1px solid #e9ecef;
+        }
+
+            .user-info i {
+                margin-left: 8px;
+            }
+
+        /* بطاقة التفاصيل */
+        .details-card {
+            background: white;
+            border-radius: 16px;
+            padding: 25px;
+            box-shadow: 0 5px 20px rgba(0,0,0,0.05);
+            border: 1px solid #f0f0f0;
+        }
+
+        .details-title {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 20px;
+            color: #17a2b8;
+            font-weight: 600;
+            font-size: 22px;
+            padding-bottom: 10px;
+            border-bottom: 2px solid #f0f0f0;
+        }
+
+            .details-title i {
+                font-size: 24px;
+            }
+
+        /* معلومات عامة */
+        .info-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+
+        .info-item {
+            background: #f8f9fa;
+            padding: 12px 15px;
+            border-radius: 10px;
+            border-right: 3px solid #17a2b8;
+        }
+
+        .info-label {
+            font-size: 12px;
+            color: #6c757d;
+            margin-bottom: 5px;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+
+            .info-label i {
+                color: #17a2b8;
+                width: 20px;
+            }
+
+        .info-value {
+            font-size: 16px;
+            font-weight: 600;
+            color: #333;
+            padding-right: 25px;
+        }
+
+        /* حالة السجل */
+        .status-badge {
+            display: inline-block;
+            padding: 5px 15px;
+            border-radius: 50px;
+            font-size: 13px;
+            font-weight: 500;
+        }
+
+        .status-safe {
+            background: #d4edda;
+            color: #155724;
+        }
+
+        .status-edited {
+            background: #fff3cd;
+            color: #856404;
+        }
+
+        .status-deleted {
+            background: #f8d7da;
+            color: #721c24;
+        }
+
+        /* الجداول */
+        .table-responsive {
+            overflow-x: auto;
+            border-radius: 12px;
+            margin: 20px 0;
+        }
+
+        .comparison-table {
+            width: 100%;
+            border-collapse: collapse;
+            background: white;
+        }
+
+            .comparison-table th {
+                background: #17a2b8;
+                color: white;
+                padding: 12px;
+                font-weight: 500;
+                font-size: 14px;
+                text-align: center;
+            }
+
+            .comparison-table td {
+                padding: 12px;
+                border: 1px solid #e9ecef;
+                text-align: center;
+                color: #333;
+                font-size: 14px;
+            }
+
+            .comparison-table tbody tr:hover {
+                background: #f0f8ff;
+            }
+
+            .comparison-table .table-warning {
+                background: #fff3cd;
+            }
+
+                .comparison-table .table-warning td {
+                    font-weight: 600;
+                }
+
+        .section-title {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin: 25px 0 15px;
+            color: #17a2b8;
+            font-weight: 600;
+            font-size: 18px;
+        }
+
+            .section-title i {
+                font-size: 20px;
+            }
+
+        /* الأزرار */
+        .btn {
+            padding: 10px 20px;
+            border-radius: 8px;
+            color: #fff;
+            text-decoration: none;
+            font-size: 14px;
+            font-weight: 500;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            transition: all 0.3s;
+            border: none;
+            cursor: pointer;
+        }
+
+            .btn:hover {
+                transform: translateY(-2px);
+                box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+            }
+
+        .btn-secondary {
+            background: #6c757d;
+        }
+
+            .btn-secondary:hover {
+                background: #5a6268;
+            }
+
+        .action-buttons {
+            display: flex;
+            gap: 10px;
+            margin-top: 25px;
+            padding-top: 20px;
+            border-top: 2px solid #f0f0f0;
+        }
+
+        /* خط فاصل */
+        .divider {
+            height: 1px;
+            background: linear-gradient(to right, transparent, #17a2b8, transparent);
+            margin: 25px 0;
+        }
+    </style>
+</head>
+<body>
+    <div class="page-wrapper">
+
+        <!-- بطاقة العنوان -->
+        <div class="header-card">
+            <div class="header-title">
+                <h1>
+                    <i class="fas fa-info-circle"></i> تفاصيل تقفيل الحساب
+                </h1>
+                <p>عرض كامل لبيانات التقفيل والتعديلات</p>
+            </div>
+            <div class="user-info">
+                <i class="fas fa-user-circle"></i>
+                @username
+            </div>
+        </div>
+
+        <!-- بطاقة التفاصيل -->
+        <div class="details-card">
+            <div class="details-title">
+                <i class="fas fa-file-invoice"></i>
+                <span>معلومات التقفيل</span>
+            </div>
+
+            <!-- معلومات عامة -->
+            <div class="info-grid">
+                <div class="info-item">
+                    <div class="info-label">
+                        <i class="far fa-calendar-alt"></i> تاريخ التقفيل
+                    </div>
+                    <div class="info-value">@Model.ClosingDate.ToString("yyyy-MM-dd HH:mm")</div>
+                </div>
+                <div class="info-item">
+                    <div class="info-label">
+                        <i class="fas fa-user-plus"></i> أضيف بواسطة
+                    </div>
+                    <div class="info-value">@Model.CreatedBy</div>
+                </div>
+                <div class="info-item">
+                    <div class="info-label">
+                        <i class="fas fa-clock"></i> تاريخ الإنشاء
+                    </div>
+                    <div class="info-value">@Model.CreatedAt.ToString("yyyy-MM-dd HH:mm")</div>
+                </div>
+                <div class="info-item">
+                    <div class="info-label">
+                        <i class="fas fa-history"></i> آخر تعديل
+                    </div>
+                    <div class="info-value">@(Model.UpdatedAt?.ToString("yyyy-MM-dd HH:mm") ?? "لا يوجد")</div>
+                </div>
+            </div>
+
+            @if (Model.IsEdited)
+            {
+                <div class="info-item" style="margin-bottom: 15px;">
+                    <div class="info-label">
+                        <i class="fas fa-user-edit"></i> تم التعديل بواسطة
+                    </div>
+                    <div class="info-value" style="color: #856404;">@(Model.UpdatedBy ?? "غير معروف")</div>
+                </div>
+            }
+
+            <!-- حالة السجل -->
+            <div style="margin-bottom: 20px;">
+                <span class="info-label">الحالة:</span>
+                <div style="margin-top: 5px;">
+                    @if (Model.IsDeleted)
+                    {
+                        <span class="status-badge status-deleted"><i class="fas fa-trash"></i> محذوف</span>
+                    }
+                    else if (Model.IsEdited)
+                    {
+                        <span class="status-badge status-edited"><i class="fas fa-edit"></i> تم التعديل</span>
+                    }
+                    else
+                    {
+                        <span class="status-badge status-safe"><i class="fas fa-check"></i> سليم</span>
+                    }
+                </div>
+            </div>
+
+            <div class="divider"></div>
+
+            <!-- الرصيد المالي -->
+            <div class="section-title">
+                <i class="fas fa-coins"></i>
+                <span>الرصيد المالي</span>
+            </div>
+
+            <div class="table-responsive">
+                <table class="comparison-table">
+                    <thead>
+                        <tr>
+                            <th>البيان</th>
+                            <th>قبل التعديل</th>
+                            <th>بعد التعديل</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr class="@(oldData != null && oldData.CashLeft != Model.CashLeft ? "table-warning" : "")">
+                            <td><i class="fas fa-money-bill"></i> الفلوس المتبقية</td>
+                            <td>@(oldData?.CashLeft.ToString("N2") ?? "-")</td>
+                            <td><strong>@Model.CashLeft.ToString("N2")</strong></td>
+                        </tr>
+                        <tr class="@(oldData != null && oldData.CoinsAmount != Model.CoinsAmount ? "table-warning" : "")">
+                            <td><i class="fas fa-coins"></i> الفضة</td>
+                            <td>@(oldData?.CoinsAmount.ToString("N2") ?? "-")</td>
+                            <td><strong>@Model.CoinsAmount.ToString("N2")</strong></td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <div class="divider"></div>
+
+            <!-- الماكينات -->
+            <div class="section-title">
+                <i class="fas fa-cogs"></i>
+                <span>تفاصيل الماكينات</span>
+            </div>
+
+            <div class="table-responsive">
+                <table class="comparison-table">
+                    <thead>
+                        <tr>
+                            <th>اسم الماكينة</th>
+                            <th>قبل التعديل</th>
+                            <th>بعد التعديل</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @{
+                            var allMachineNames = new List<string>();
+
+                            if (oldData != null)
+                                allMachineNames.AddRange(oldData.Machines.Select(m => m.MachineName));
+
+                            allMachineNames.AddRange(Model.Machines.Select(m => m.MachineName));
+
+                            allMachineNames = allMachineNames.Distinct().ToList();
+
+                            foreach (var name in allMachineNames)
+                            {
+                                var oldMachine = oldData?.Machines.FirstOrDefault(m => m.MachineName == name);
+                                var newMachine = Model.Machines.FirstOrDefault(m => m.MachineName == name);
+
+                                bool added = oldMachine == null && newMachine != null;
+                                bool deleted = oldMachine != null && newMachine == null;
+                                bool changed = oldMachine != null && newMachine != null && oldMachine.Balance != newMachine.Balance;
+
+                                string rowClass = (added || deleted || changed) ? "table-warning" : "";
+
+                                <tr class="@rowClass">
+                                    <td><i class="fas fa-microchip"></i> @name</td>
+                                    <td>@(oldMachine?.Balance.ToString("N2") ?? "-")</td>
+                                    <td>@(newMachine?.Balance.ToString("N2") ?? "-")</td>
+                                </tr>
+                            }
+                        }
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- ملخص التغييرات -->
+            @if (Model.IsEdited && oldData != null)
+            {
+                <div style="background: #f8f9fa; padding: 15px; border-radius: 10px; margin: 20px 0;">
+                    <h6 style="color: #856404; margin-bottom: 10px;">
+                        <i class="fas fa-info-circle"></i> ملخص التغييرات:
+                    </h6>
+                    <ul style="margin: 0; padding-right: 20px;">
+                        @if (oldData.CashLeft != Model.CashLeft)
+                        {
+                            <li>تغيير الفلوس المتبقية من @oldData.CashLeft.ToString("N2") إلى @Model.CashLeft.ToString("N2")</li>
+                        }
+                        @if (oldData.CoinsAmount != Model.CoinsAmount)
+                        {
+                            <li>تغيير الفضة من @oldData.CoinsAmount.ToString("N2") إلى @Model.CoinsAmount.ToString("N2")</li>
+                        }
+                        @{
+                            var oldMachineNames = oldData.Machines.Select(m => m.MachineName).ToList();
+                            var newMachineNames = Model.Machines.Select(m => m.MachineName).ToList();
+
+                            var addedMachines = newMachineNames.Except(oldMachineNames).ToList();
+                            var removedMachines = oldMachineNames.Except(newMachineNames).ToList();
+                            var changedMachines = oldData.Machines.Where(om =>
+                            Model.Machines.Any(nm => nm.MachineName == om.MachineName && nm.Balance != om.Balance))
+                            .Select(om => om.MachineName).ToList();
+                        }
+                        @foreach (var m in addedMachines)
+                        {
+                            <li>إضافة ماكينة جديدة: @m</li>
+                        }
+                        @foreach (var m in removedMachines)
+                        {
+                            <li>حذف ماكينة: @m</li>
+                        }
+                        @foreach (var m in changedMachines)
+                        {
+                            var oldBalance = oldData.Machines.First(x => x.MachineName == m).Balance;
+                            var newBalance = Model.Machines.First(x => x.MachineName == m).Balance;
+                            <li>تغيير رصيد @m من @oldBalance.ToString("N2") إلى @newBalance.ToString("N2")</li>
+                        }
+                    </ul>
+                </div>
+            }
+
+            <!-- أزرار الإجراءات -->
+            <div class="action-buttons">
+                <a asp-action="Reports" class="btn btn-secondary">
+                    <i class="fas fa-arrow-right"></i> الرجوع للتقارير
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

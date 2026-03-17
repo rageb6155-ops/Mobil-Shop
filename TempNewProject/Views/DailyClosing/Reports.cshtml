@@ -1,0 +1,463 @@
+﻿@model IEnumerable<MobileShopSystem.Models.DailyClosing>
+
+@{
+    ViewBag.Title = "تقارير تقفيل الحساب";
+    var username = Context.Session.GetString("Username");
+}
+
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>@ViewBag.Title</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" />
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, sans-serif;
+            background: #ffffff;
+            margin: 0;
+            padding: 20px;
+            color: #333;
+        }
+
+        .page-wrapper {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        /* بطاقة العنوان */
+        .header-card {
+            background: white;
+            border-radius: 16px;
+            padding: 20px 25px;
+            margin-bottom: 25px;
+            box-shadow: 0 5px 20px rgba(0,0,0,0.05);
+            border: 1px solid #f0f0f0;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 15px;
+        }
+
+        .header-title h1 {
+            margin: 0;
+            font-size: 26px;
+            font-weight: 600;
+            color: #ff4b2b;
+        }
+
+        .header-title p {
+            margin: 5px 0 0;
+            color: #6c757d;
+            font-size: 14px;
+        }
+
+        .user-info {
+            background: #f8f9fa;
+            color: #ff4b2b;
+            padding: 8px 20px;
+            border-radius: 50px;
+            font-size: 14px;
+            font-weight: 500;
+            border: 1px solid #e9ecef;
+        }
+
+            .user-info i {
+                margin-left: 8px;
+            }
+
+        /* بطاقة البحث */
+        .search-card {
+            background: white;
+            border-radius: 16px;
+            padding: 20px 25px;
+            margin-bottom: 25px;
+            box-shadow: 0 5px 20px rgba(0,0,0,0.05);
+            border: 1px solid #f0f0f0;
+        }
+
+        .search-title {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 15px;
+            color: #ff4b2b;
+            font-weight: 600;
+        }
+
+            .search-title i {
+                font-size: 20px;
+            }
+
+        .search-form {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+
+        .date-input {
+            flex: 1;
+            min-width: 200px;
+        }
+
+        .btn-search {
+            background: #ff4b2b;
+            color: white;
+            border: none;
+            padding: 12px 25px;
+            border-radius: 8px;
+            font-size: 14px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.3s;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+            .btn-search:hover {
+                background: #ff3a1a;
+                transform: translateY(-2px);
+            }
+
+        /* بطاقة الجدول */
+        .table-card {
+            background: white;
+            border-radius: 16px;
+            padding: 25px;
+            box-shadow: 0 5px 20px rgba(0,0,0,0.05);
+            border: 1px solid #f0f0f0;
+            margin-bottom: 25px;
+        }
+
+        .table-title {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 20px;
+            color: #ff4b2b;
+            font-weight: 600;
+            font-size: 20px;
+        }
+
+            .table-title i {
+                font-size: 24px;
+            }
+
+        /* الجدول */
+        .table-responsive {
+            overflow-x: auto;
+            border-radius: 12px;
+        }
+
+        .reports-table {
+            width: 100%;
+            border-collapse: collapse;
+            background: white;
+        }
+
+            .reports-table th {
+                background: #ff4b2b;
+                color: white;
+                padding: 12px;
+                font-weight: 500;
+                font-size: 14px;
+                text-align: center;
+            }
+
+            .reports-table td {
+                padding: 12px;
+                border-bottom: 1px solid #e9ecef;
+                text-align: center;
+                color: #333;
+                font-size: 14px;
+            }
+
+            .reports-table tbody tr {
+                transition: all 0.3s;
+            }
+
+                .reports-table tbody tr:hover {
+                    background: #fff1ee;
+                }
+
+                .reports-table tbody tr.table-danger {
+                    background: #f8d7da;
+                }
+
+                .reports-table tbody tr.table-warning {
+                    background: #fff3cd;
+                }
+
+        /* الأزرار */
+        .btn {
+            padding: 6px 12px;
+            border-radius: 6px;
+            color: #fff;
+            text-decoration: none;
+            font-size: 12px;
+            margin: 2px;
+            display: inline-block;
+            transition: all 0.3s;
+            border: none;
+            cursor: pointer;
+        }
+
+            .btn:hover {
+                transform: translateY(-2px);
+            }
+
+        .btn-info {
+            background: #17a2b8;
+        }
+
+        .btn-warning {
+            background: #ffc107;
+            color: #333;
+        }
+
+        .btn-success {
+            background: #28a745;
+        }
+
+        .btn-danger {
+            background: #dc3545;
+        }
+
+        .btn-dark {
+            background: #343a40;
+        }
+
+        .btn-secondary {
+            background: #6c757d;
+        }
+
+        /* حالة السجلات */
+        .status-badge {
+            display: inline-block;
+            padding: 3px 8px;
+            border-radius: 12px;
+            font-size: 11px;
+            font-weight: bold;
+        }
+
+        .status-safe {
+            background: #d4edda;
+            color: #155724;
+        }
+
+        .status-edited {
+            background: #fff3cd;
+            color: #856404;
+        }
+
+        .status-deleted {
+            background: #f8d7da;
+            color: #721c24;
+        }
+
+        /* نماذج داخل الجدول */
+        .inline-form {
+            display: inline;
+        }
+
+        /* زر الرجوع */
+        .back-button {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 12px 25px;
+            background: #6c757d;
+            color: white;
+            text-decoration: none;
+            border-radius: 8px;
+            font-size: 14px;
+            font-weight: 500;
+            transition: all 0.3s;
+        }
+
+            .back-button:hover {
+                background: #5a6268;
+                transform: translateY(-2px);
+            }
+
+        /* إحصائيات سريعة */
+        .stats-mini {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+
+        .stat-mini-item {
+            background: #f8f9fa;
+            padding: 10px;
+            border-radius: 8px;
+            text-align: center;
+            border-right: 3px solid #ff4b2b;
+        }
+
+        .stat-mini-label {
+            font-size: 12px;
+            color: #6c757d;
+        }
+
+        .stat-mini-value {
+            font-size: 18px;
+            font-weight: bold;
+            color: #ff4b2b;
+        }
+    </style>
+</head>
+<body>
+    <div class="page-wrapper">
+
+        <!-- بطاقة العنوان -->
+        <div class="header-card">
+            <div class="header-title">
+                <h1>
+                    <i class="fas fa-chart-line"></i> تقارير تقفيل الحساب
+                </h1>
+                <p>عرض وتصفية تقارير التقفيل اليومي</p>
+            </div>
+            <div class="user-info">
+                <i class="fas fa-user-circle"></i>
+                @username
+            </div>
+        </div>
+
+        <!-- إحصائيات سريعة -->
+        <div class="stats-mini">
+            <div class="stat-mini-item">
+                <div class="stat-mini-label">إجمالي التقارير</div>
+                <div class="stat-mini-value">@Model.Count()</div>
+            </div>
+            <div class="stat-mini-item">
+                <div class="stat-mini-label">تقارير سليمة</div>
+                <div class="stat-mini-value">@Model.Count(d => !d.IsDeleted && !d.IsEdited)</div>
+            </div>
+            <div class="stat-mini-item">
+                <div class="stat-mini-label">تقارير معدلة</div>
+                <div class="stat-mini-value">@Model.Count(d => d.IsEdited)</div>
+            </div>
+            <div class="stat-mini-item">
+                <div class="stat-mini-label">تقارير محذوفة</div>
+                <div class="stat-mini-value">@Model.Count(d => d.IsDeleted)</div>
+            </div>
+        </div>
+
+        <!-- بطاقة البحث -->
+        <div class="search-card">
+            <div class="search-title">
+                <i class="fas fa-filter"></i>
+                <span>تصفية النتائج</span>
+            </div>
+            <form method="get" asp-action="Reports" class="search-form">
+                <div class="date-input">
+                    <input type="date" name="filterDate" class="form-control" placeholder="اختر التاريخ" />
+                </div>
+                <button type="submit" class="btn-search">
+                    <i class="fas fa-search"></i> بحث
+                </button>
+            </form>
+        </div>
+
+        <!-- بطاقة الجدول -->
+        <div class="table-card">
+            <div class="table-title">
+                <i class="fas fa-list-alt"></i>
+                <span>قائمة التقارير</span>
+            </div>
+
+            <div class="table-responsive">
+                <table class="reports-table">
+                    <thead>
+                        <tr>
+                            <th>التاريخ</th>
+                            <th>المستخدم</th>
+                            <th>الفلوس</th>
+                            <th>الفضة</th>
+                            <th>الحالة</th>
+                            <th>الإجراءات</th>
+                        </tr>
+                    </thead>
+
+                    <tbody>
+                        @foreach (var closing in Model)
+                        {
+                            string rowClass = closing.IsDeleted ? "table-danger" : closing.IsEdited ? "table-warning" : "";
+
+                            <tr class="@rowClass">
+                                <td><i class="far fa-calendar-alt"></i> @closing.ClosingDate.ToString("yyyy-MM-dd HH:mm")</td>
+                                <td><i class="fas fa-user"></i> @closing.CreatedBy</td>
+                                <td><i class="fas fa-money-bill"></i> @closing.CashLeft.ToString("N2")</td>
+                                <td><i class="fas fa-coins"></i> @closing.CoinsAmount.ToString("N2")</td>
+                                <td>
+                                    @if (closing.IsDeleted)
+                                    {
+                                        <span class="status-badge status-deleted"><i class="fas fa-trash"></i> محذوف</span>
+                                    }
+                                    else if (closing.IsEdited)
+                                    {
+                                        <span class="status-badge status-edited"><i class="fas fa-edit"></i> تم التعديل</span>
+                                    }
+                                    else
+                                    {
+                                        <span class="status-badge status-safe"><i class="fas fa-check"></i> سليم</span>
+                                    }
+                                </td>
+                                <td>
+                                    <a asp-action="Details" asp-route-id="@closing.Id" class="btn btn-info">
+                                        <i class="fas fa-info-circle"></i> تفاصيل
+                                    </a>
+                                    <a asp-action="Edit" asp-route-id="@closing.Id" class="btn btn-warning">
+                                        <i class="fas fa-edit"></i> تعديل
+                                    </a>
+
+                                    <!-- زر الطباعة -->
+                                    <a asp-action="Print" asp-route-id="@closing.Id" class="btn btn-success" target="_blank">
+                                        <i class="fas fa-print"></i> طباعة
+                                    </a>
+
+                                    <form asp-action="Delete" asp-route-id="@closing.Id" method="post" class="inline-form">
+                                        <button type="submit" class="btn btn-danger">
+                                            <i class="fas fa-eye-slash"></i> تظليل
+                                        </button>
+                                    </form>
+
+                                    <!-- زر الحذف النهائي -->
+                                    <form asp-action="PermanentDelete" asp-route-id="@closing.Id" method="post" class="inline-form"
+                                          onsubmit="return confirmFinalDelete();">
+                                        <button type="submit" class="btn btn-dark">
+                                            <i class="fas fa-trash-alt"></i> حذف نهائي
+                                        </button>
+                                    </form>
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- زر الرجوع -->
+            <div style="margin-top: 20px;">
+                <a asp-action="Index" class="back-button">
+                    <i class="fas fa-arrow-right"></i> رجوع لتقفيل الحساب
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        function confirmFinalDelete() {
+            if (!confirm('هل أنت متأكد أنك تريد حذف هذا اليوم نهائيًا؟')) return false;
+            return confirm('تأكيد ثاني: سيتم الحذف نهائيًا ولن يمكن التراجع! هل تريد المتابعة؟');
+        }
+    </script>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>
